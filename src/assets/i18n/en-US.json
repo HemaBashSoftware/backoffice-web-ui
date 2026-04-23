@@ -1,0 +1,8 @@
+{
+    "COMMON": {
+        "SUCCESS": "Transaction Successful"
+    },
+    "TABLE": {
+        "PAGE_REPORT": "Showing {first} to {last} of {totalRecords} items"
+    }
+}
