@@ -11,8 +11,8 @@ export class YscTypeService {
     constructor(private http: HttpClient) {}
 
     getAll(): Observable<YscType[]>          { return this.http.get<YscType[]>(`${this.base}/getall`); }
-    add(data: { name: string }): Observable<string>        { return this.http.post<string>(this.base, data); }
-    update(data: YscType): Observable<string>              { return this.http.put<string>(this.base, data); }
+    add(data: { name: string }): Observable<string>        { return this.http.post<string>(this.base, data, { responseType: 'text' as 'json' }); }
+    update(data: YscType): Observable<string>              { return this.http.put<string>(this.base, data, { responseType: 'text' as 'json' }); }
     delete(id: number): Observable<string>                 { return this.http.delete<string>(this.base, { body: { id }, responseType: 'text' as 'json' }); }
 }
 
@@ -23,7 +23,7 @@ export class StandartNumberService {
     constructor(private http: HttpClient) {}
 
     getAll(): Observable<StandartNumber[]>                        { return this.http.get<StandartNumber[]>(this.base); }
-    add(data: { standartNumber: string }): Observable<string>     { return this.http.post<string>(this.base, data); }
-    update(data: StandartNumber): Observable<string>              { return this.http.put<string>(this.base, data); }
+    add(data: { standartNumber: string }): Observable<string>     { return this.http.post<string>(this.base, data, { responseType: 'text' as 'json' }); }
+    update(data: StandartNumber): Observable<string>              { return this.http.put<string>(this.base, data, { responseType: 'text' as 'json' }); }
     delete(id: number): Observable<string>                        { return this.http.delete<string>(this.base, { body: { id }, responseType: 'text' as 'json' }); }
 }

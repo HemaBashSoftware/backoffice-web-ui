@@ -17,11 +17,11 @@ export class CustomerContactService {
     }
 
     add(data: Partial<CustomerContactDetail>): Observable<string> {
-        return this.http.post<string>(`${this.base}/customercontacts`, data);
+        return this.http.post<string>(`${this.base}/customercontacts`, data, { responseType: 'text' as 'json' });
     }
 
     update(data: CustomerContactDetail): Observable<string> {
-        return this.http.put<string>(`${this.base}/customercontacts`, data);
+        return this.http.put<string>(`${this.base}/customercontacts`, data, { responseType: 'text' as 'json' });
     }
 
     delete(id: number): Observable<string> {

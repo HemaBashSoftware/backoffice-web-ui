@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TableModule, Table } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
+import { ToolbarModule } from 'primeng/toolbar';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
@@ -30,15 +31,22 @@ import { Neighbourhood } from '../../models/address-lookup.model';
     providers: [MessageService, ConfirmationService],
     imports: [
         CommonModule, FormsModule, ReactiveFormsModule,
-        TableModule, ButtonModule, DialogModule, InputTextModule,
+        TableModule, ButtonModule, ToolbarModule, DialogModule, InputTextModule,
         SelectModule, TextareaModule, ConfirmDialogModule, ToastModule,
-        TabsModule, DatePickerModule, InputNumberModule,
+        DatePickerModule, InputNumberModule,
         IconFieldModule, InputIconModule,
     ],
     templateUrl: './customer.component.html',
 })
 export class YscCustomerComponent implements OnInit {
     @ViewChild('dt') dt!: Table;
+
+    cols = [
+        { field: 'name',         header: 'Firma Adı' },
+        { field: 'taxNumber',    header: 'Vergi No' },
+        { field: 'taxOffice',    header: 'Vergi Dairesi' },
+        { field: 'firmOfficial', header: 'Yetkili' },
+    ];
 
     list: Customer[] = [];
     loading = false;
@@ -193,7 +201,7 @@ export class YscCustomerComponent implements OnInit {
             this.form.markAllAsTouched();
             return;
         }
-        const data = this.form.value as Customer;
+        const data = this.form.getRawValue() as Customer;
         const req = this.isEdit ? this.service.update(data) : this.service.add(data);
         req.subscribe({
             next: () => {

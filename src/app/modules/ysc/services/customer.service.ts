@@ -19,11 +19,11 @@ export class YscCustomerService {
     }
 
     add(customer: Customer): Observable<string> {
-        return this.http.post<string>(`${this.base}/customers`, customer);
+        return this.http.post<string>(`${this.base}/customers`, customer, { responseType: 'text' as 'json' });
     }
 
     update(customer: Customer): Observable<string> {
-        return this.http.put<string>(`${this.base}/customers`, customer);
+        return this.http.put<string>(`${this.base}/customers`, customer, { responseType: 'text' as 'json' });
     }
 
     delete(id: number): Observable<string> {
@@ -31,6 +31,6 @@ export class YscCustomerService {
     }
 
     updateStatus(customer: Customer, status: number): Observable<string> {
-        return this.http.put<string>(`${this.base}/customers`, { ...customer, recordStatus: status });
+        return this.http.put<string>(`${this.base}/customers`, { ...customer, recordStatus: status }, { responseType: 'text' as 'json' });
     }
 }

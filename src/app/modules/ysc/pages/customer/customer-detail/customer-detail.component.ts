@@ -40,6 +40,19 @@ import { Province, District, Neighbourhood } from '../../../models/address-looku
     templateUrl: './customer-detail.component.html',
 })
 export class CustomerDetailComponent implements OnInit {
+    addrCols = [
+        { field: 'label',       header: 'Etiket' },
+        { field: 'fullAddress', header: 'Tam Adres' },
+        { field: 'street',      header: 'Sokak' },
+    ];
+
+    contactCols = [
+        { field: 'role',  header: 'Görevi' },
+        { field: 'phone', header: 'Telefon' },
+        { field: 'email', header: 'E-posta' },
+        { field: 'notes', header: 'Notlar' },
+    ];
+
     customer: Customer | null = null;
     addresses: CustomerAddressDetail[] = [];
     contacts: CustomerContactDetail[] = [];

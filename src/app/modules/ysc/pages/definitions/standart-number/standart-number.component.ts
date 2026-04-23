@@ -10,6 +10,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { MessageService, ConfirmationService } from 'primeng/api';
+import { ToolbarModule } from 'primeng/toolbar';
 
 import { StandartNumberService } from '../../../services/definitions.service';
 import { StandartNumber } from '../../../models/definitions.model';
@@ -19,37 +20,38 @@ import { StandartNumber } from '../../../models/definitions.model';
     standalone: true,
     providers: [MessageService, ConfirmationService],
     imports: [CommonModule, FormsModule, TableModule, ButtonModule, DialogModule,
-              InputTextModule, ToastModule, ConfirmDialogModule, IconFieldModule, InputIconModule],
+              InputTextModule, ToastModule, ConfirmDialogModule, IconFieldModule, InputIconModule,
+              ToolbarModule],
     template: `
     <p-toast /><p-confirmdialog />
-    <div style="padding:1.5rem;">
-        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem; margin-bottom:1.25rem;">
-            <div>
-                <h2 style="font-size:1.3rem; font-weight:700; color:var(--text-color); margin:0 0 0.2rem;">Standart Numara Tanımları</h2>
-                <p style="color:var(--text-color-secondary); font-size:0.85rem; margin:0;">{{ list.length }} kayıt</p>
-            </div>
-            <div style="display:flex; gap:0.5rem;">
-                <p-iconfield>
-                    <p-inputicon styleClass="pi pi-search" />
-                    <input pInputText placeholder="Ara..." (input)="dt.filterGlobal($any($event.target).value,'contains')" style="width:200px;" />
-                </p-iconfield>
-                <p-button label="Yeni" icon="pi pi-plus" (onClick)="openNew()" />
-            </div>
-        </div>
 
-        <p-table #dt [value]="list" [loading]="loading" [globalFilterFields]="['standartNumber']"
-                 [paginator]="true" [rows]="15" styleClass="p-datatable-sm p-datatable-gridlines">
-            <ng-template #header>
+    <p-toolbar styleClass="mb-4">
+        <ng-template #start>
+            <p-button label="Yeni" icon="pi pi-plus" severity="secondary" (onClick)="openNew()" />
+        </ng-template>
+        <ng-template #end>
+            <p-iconfield>
+                <p-inputicon styleClass="pi pi-search" />
+                <input pInputText placeholder="Ara..." (input)="dt.filterGlobal($any($event.target).value,'contains')" style="width:200px;" />
+            </p-iconfield>
+        </ng-template>
+    </p-toolbar>
+
+    <div class="card">
+        <p-table #dt [value]="list" [columns]="cols" [loading]="loading" [globalFilterFields]="['standartNumber']"
+                 [rowHover]="true" [paginator]="true" [rows]="15"
+                 currentPageReportTemplate="{totalRecords} kayıttan {first} - {last} arası" [showCurrentPageReport]="true">
+            <ng-template #header let-columns>
                 <tr>
-                    <th pSortableColumn="id">ID <p-sortIcon field="id" /></th>
-                    <th pSortableColumn="standartNumber">Standart Numara <p-sortIcon field="standartNumber" /></th>
+                    <th *ngFor="let col of columns" pSortableColumn="{{ col.field }}">
+                        {{ col.header }} <p-sortIcon field="{{ col.field }}" />
+                    </th>
                     <th style="width:90px; text-align:center;">İşlem</th>
                 </tr>
             </ng-template>
-            <ng-template #body let-row>
+            <ng-template #body let-row let-columns="columns">
                 <tr>
-                    <td>{{ row.id }}</td>
-                    <td>{{ row.standartNumber }}</td>
+                    <td *ngFor="let col of columns">{{ row[col.field] }}</td>
                     <td style="text-align:center;">
                         <div style="display:flex; gap:0.25rem; justify-content:center;">
                             <p-button icon="pi pi-pencil" severity="warn" [text]="true" [rounded]="true" (onClick)="openEdit(row)" />
@@ -59,18 +61,20 @@ import { StandartNumber } from '../../../models/definitions.model';
                 </tr>
             </ng-template>
             <ng-template #emptymessage>
-                <tr><td colspan="3" style="text-align:center; padding:1.5rem; color:var(--text-color-secondary);">Kayıt bulunamadı.</td></tr>
+                <tr><td [attr.colspan]="cols.length + 1" style="text-align:center; padding:1.5rem; color:var(--text-color-secondary);">Kayıt bulunamadı.</td></tr>
             </ng-template>
         </p-table>
     </div>
 
     <p-dialog [(visible)]="showDialog" [modal]="true" [style]="{width:'420px'}"
               [header]="isEdit ? 'Düzenle' : 'Yeni Standart Numara'" [draggable]="false">
-        <div style="padding:0.5rem 0; display:flex; flex-direction:column; gap:0.35rem;">
-            <label style="font-size:0.82rem; font-weight:600; color:var(--text-color-secondary);">Standart Numara <span style="color:red">*</span></label>
-            <input pInputText [(ngModel)]="editValue" class="w-full" placeholder="ör. TS EN 1081" />
-        </div>
-        <ng-template #footer>
+        <ng-template pTemplate="content">
+            <div style="padding:0.5rem 0; display:flex; flex-direction:column; gap:0.35rem;">
+                <label style="font-size:0.82rem; font-weight:600; color:var(--text-color-secondary);">Standart Numara <span style="color:red">*</span></label>
+                <input pInputText [(ngModel)]="editValue" class="w-full" placeholder="ör. TS EN 1081" />
+            </div>
+        </ng-template>
+        <ng-template pTemplate="footer">
             <p-button label="İptal" severity="secondary" [text]="true" (onClick)="showDialog = false" />
             <p-button [label]="isEdit ? 'Güncelle' : 'Kaydet'" icon="pi pi-check" (onClick)="save()" />
         </ng-template>
@@ -79,6 +83,11 @@ import { StandartNumber } from '../../../models/definitions.model';
 })
 export class StandartNumberComponent implements OnInit {
     @ViewChild('dt') dt!: Table;
+
+    cols = [
+        { field: 'id',             header: 'ID' },
+        { field: 'standartNumber', header: 'Standart Numara' },
+    ];
 
     list: StandartNumber[] = [];
     loading = false;

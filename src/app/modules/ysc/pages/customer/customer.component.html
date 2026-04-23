@@ -1,30 +1,32 @@
 <p-toast />
 <p-confirmdialog />
 
-<div style="padding:1.5rem;">
+<p-toolbar styleClass="mb-4">
+    <ng-template #start>
+        <p-button label="Yeni Müşteri" icon="pi pi-plus" severity="secondary" (onClick)="openNew()" />
+    </ng-template>
+    <ng-template #end>
+        <p-iconfield>
+            <p-inputicon styleClass="pi pi-search" />
+            <input pInputText placeholder="Ara..." (input)="onGlobalFilter($event)" style="width:220px;" />
+        </p-iconfield>
+    </ng-template>
+</p-toolbar>
 
-    <!-- Başlık + Toolbar -->
-    <div style="margin-bottom:1.25rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
-        <div>
-            <h2 style="font-size:1.4rem; font-weight:700; color:var(--text-color); margin:0 0 0.2rem;">Müşteriler</h2>
-            <p style="color:var(--text-color-secondary); font-size:0.85rem; margin:0;">{{ list.length }} kayıt</p>
-        </div>
-        <div style="display:flex; gap:0.5rem; align-items:center;">
-            <p-iconfield>
-                <p-inputicon styleClass="pi pi-search" />
-                <input pInputText placeholder="Ara..." (input)="onGlobalFilter($event)" style="width:220px;" />
-            </p-iconfield>
-            <p-button label="Yeni Müşteri" icon="pi pi-plus" (onClick)="openNew()" />
-        </div>
-    </div>
-
-    <!-- Tablo -->
+<div class="card">
     <p-table #dt [value]="list" [loading]="loading"
              [paginator]="true" [rows]="15" [rowsPerPageOptions]="[10,15,25,50]"
              [globalFilterFields]="['name','taxOffice','firmOfficial']"
-             currentPageReportTemplate="{first} - {last} / {totalRecords}"
-             [showCurrentPageReport]="true"
-             styleClass="p-datatable-sm p-datatable-gridlines">
+             currentPageReportTemplate="{totalRecords} kayıttan {first} - {last} arası"
+             [showCurrentPageReport]="true" [rowHover]="true"
+             >
+
+        <ng-template #caption>
+            <div class="flex items-center justify-between">
+                <h5 class="m-0">Müşteri Listesi</h5>
+                <span style="color:var(--text-color-secondary); font-size:0.85rem;">{{ list.length }} kayıt</span>
+            </div>
+        </ng-template>
 
         <ng-template #header>
             <tr>
@@ -32,7 +34,7 @@
                 <th pSortableColumn="taxNumber">Vergi No <p-sortIcon field="taxNumber" /></th>
                 <th pSortableColumn="taxOffice">Vergi Dairesi <p-sortIcon field="taxOffice" /></th>
                 <th pSortableColumn="firmOfficial">Yetkili <p-sortIcon field="firmOfficial" /></th>
-                <th style="width:110px; text-align:center;">İşlem</th>
+                <th style="min-width:10rem"></th>
             </tr>
         </ng-template>
 
@@ -42,240 +44,212 @@
                 <td>{{ row.taxNumber }}</td>
                 <td>{{ row.taxOffice }}</td>
                 <td>{{ row.firmOfficial }}</td>
-                <td style="text-align:center;">
-                    <div style="display:flex; gap:0.3rem; justify-content:center;">
-                        <p-button icon="pi pi-eye" severity="info" [text]="true" [rounded]="true"
-                                  pTooltip="Detay" (onClick)="goToDetail(row.id)" />
-                        <p-button icon="pi pi-pencil" severity="warn" [text]="true" [rounded]="true"
-                                  pTooltip="Düzenle" (onClick)="openEdit(row)" />
-                        <p-button icon="pi pi-trash" severity="danger" [text]="true" [rounded]="true"
-                                  pTooltip="Sil" (onClick)="confirmDelete(row)" />
-                    </div>
+                <td>
+                    <p-button icon="pi pi-eye" severity="info" class="mr-2" [rounded]="true" [outlined]="true"
+                              pTooltip="Detay" (onClick)="goToDetail(row.id)" />
+                    <p-button icon="pi pi-pencil" severity="success" class="mr-2" [rounded]="true" [outlined]="true"
+                              pTooltip="Düzenle" (onClick)="openEdit(row)" />
+                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
+                              pTooltip="Sil" (onClick)="confirmDelete(row)" />
                 </td>
             </tr>
         </ng-template>
 
         <ng-template #emptymessage>
-            <tr><td colspan="5" style="text-align:center; padding:2rem; color:var(--text-color-secondary);">Kayıt bulunamadı.</td></tr>
+            <tr>
+                <td colspan="5" class="text-center py-8">
+                    <i class="pi pi-users" style="font-size:2rem; color:var(--p-text-muted-color)"></i>
+                    <p style="color:var(--p-text-muted-color); margin-top:.5rem">Henüz müşteri kaydı yok</p>
+                </td>
+            </tr>
         </ng-template>
     </p-table>
 </div>
 
 <!-- Form Dialog -->
-<p-dialog [(visible)]="showDialog" [modal]="true" [style]="{width:'780px'}" [draggable]="false"
+<p-dialog [(visible)]="showDialog" [modal]="true" [style]="{width:'820px'}" [draggable]="false"
           [header]="isEdit ? 'Müşteri Düzenle' : 'Yeni Müşteri'" (onHide)="form.reset()">
 
-    <form [formGroup]="form">
-        <p-tabs>
+    <ng-template pTemplate="content">
+        <form [formGroup]="form">
 
-            <!-- Sekme 1: Genel -->
-            <p-tabpanel value="0" header="Genel Bilgiler">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; padding:0.5rem 0;">
-
-                    <div class="field">
-                        <label>Firma Adı <span style="color:red">*</span></label>
-                        <input pInputText formControlName="name" class="w-full"
-                               [class.ng-invalid]="f['name'].invalid && f['name'].touched" />
-                        @if(f['name'].invalid && f['name'].touched) {
-                            <small style="color:red;">Zorunlu alan.</small>
-                        }
-                    </div>
-
-                    <div class="field">
-                        <label>Resmi Firma Adı</label>
-                        <input pInputText formControlName="officialFirmName" class="w-full" />
-                    </div>
-
-                    <div class="field">
-                        <label>Vergi No <span style="color:red">*</span></label>
-                        <p-inputnumber formControlName="taxNumber" [useGrouping]="false" styleClass="w-full"
-                                       [invalid]="!!(f['taxNumber'].invalid && f['taxNumber'].touched)" />
-                        @if(f['taxNumber'].invalid && f['taxNumber'].touched) {
-                            <small style="color:red;">Zorunlu alan.</small>
-                        }
-                    </div>
-
-                    <div class="field">
-                        <label>Vergi Dairesi</label>
-                        <input pInputText formControlName="taxOffice" class="w-full" />
-                    </div>
-
-                    <div class="field">
-                        <label>Firma Yetkilisi</label>
-                        <input pInputText formControlName="firmOfficial" class="w-full" />
-                    </div>
-
-                    <div class="field">
-                        <label>Firma No</label>
-                        <input pInputText formControlName="firmNo" class="w-full" />
-                    </div>
-
-                    <div class="field">
-                        <label>Faks</label>
-                        <input pInputText formControlName="faxNumber" class="w-full" />
-                    </div>
-
-                    <div></div>
-
-                    <div class="field">
-                        <label>CE Sertifika No</label>
-                        <input pInputText formControlName="ceCertificateNo" class="w-full" />
-                    </div>
-
-                    <div class="field">
-                        <label>TS No</label>
-                        <input pInputText formControlName="tsNo" class="w-full" />
-                    </div>
-
-                    <div class="field">
-                        <label>TSE No</label>
-                        <input pInputText formControlName="tseNo" class="w-full" />
-                    </div>
-
-                    <div class="field">
-                        <label>HYB No</label>
-                        <input pInputText formControlName="hybNo" class="w-full" />
-                    </div>
-
-                    <div class="field">
-                        <label>DYB No</label>
-                        <input pInputText formControlName="dybNo" class="w-full" />
-                    </div>
-
-                    <div></div>
-
-                    <div class="field">
-                        <label>TSE Sertifika Bitiş</label>
-                        <p-datepicker formControlName="tseCertificateExpireDate"
-                                      dateFormat="dd.mm.yy" styleClass="w-full" [showIcon]="true" />
-                    </div>
-
-                    <div class="field">
-                        <label>HYB Sertifika Bitiş</label>
-                        <p-datepicker formControlName="hybCertificateExpireDate"
-                                      dateFormat="dd.mm.yy" styleClass="w-full" [showIcon]="true" />
-                    </div>
-
+            <!-- Firma Bilgileri -->
+            <div class="section-title">Firma Bilgileri</div>
+            <div class="form-grid">
+                <div class="field">
+                    <label>Firma Adı <span class="req">*</span></label>
+                    <input pInputText formControlName="name" class="w-full"
+                           [class.ng-invalid]="f['name'].invalid && f['name'].touched" />
+                    @if(f['name'].invalid && f['name'].touched) {
+                        <small class="err">Zorunlu alan.</small>
+                    }
                 </div>
-            </p-tabpanel>
-
-            <!-- Sekme 2: Adres -->
-            <p-tabpanel value="1" header="Adres">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; padding:0.5rem 0;"
-                     [formGroup]="addrForm">
-
-                    <div class="field">
-                        <label>Adres Etiketi</label>
-                        <input pInputText formControlName="label" class="w-full" placeholder="ör. Merkez" />
-                    </div>
-
-                    <div></div>
-
-                    <div class="field">
-                        <label>İl</label>
-                        <p-select formControlName="provinceId"
-                                  [options]="provinces" optionLabel="name" optionValue="id"
-                                  placeholder="İl seçin" styleClass="w-full" [filter]="true"
-                                  (onChange)="onProvinceChange($event.value, undefined)" />
-                    </div>
-
-                    <div class="field">
-                        <label>İlçe</label>
-                        <p-select formControlName="districtId"
-                                  [options]="districts" optionLabel="name" optionValue="id"
-                                  placeholder="İlçe seçin" styleClass="w-full" [filter]="true"
-                                  (onChange)="onDistrictChange($event.value)" />
-                    </div>
-
-                    <div class="field">
-                        <label>Mahalle</label>
-                        <p-select formControlName="neighbourhoodId"
-                                  [options]="neighbourhoods" optionLabel="name" optionValue="id"
-                                  placeholder="Mahalle seçin" styleClass="w-full" [filter]="true"
-                                   />
-                    </div>
-
-                    <div class="field">
-                        <label>Posta Kodu</label>
-                        <p-inputnumber formControlName="postalCode" [useGrouping]="false" styleClass="w-full" />
-                    </div>
-
-                    <div class="field">
-                        <label>Sokak / Cadde</label>
-                        <input pInputText formControlName="street" class="w-full" />
-                    </div>
-
-                    <div class="field" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
-                        <div>
-                            <label>Bina No</label>
-                            <input pInputText formControlName="buildingNo" class="w-full" />
-                        </div>
-                        <div>
-                            <label>Kapı No</label>
-                            <input pInputText formControlName="doorNo" class="w-full" />
-                        </div>
-                    </div>
-
-                    <div class="field" style="grid-column:span 2;">
-                        <label>Tam Adres</label>
-                        <textarea pTextarea formControlName="fullAddress" rows="3" class="w-full"
-                                  placeholder="Açık adres..."></textarea>
-                    </div>
-
+                <div class="field">
+                    <label>Resmi Firma Adı</label>
+                    <input pInputText formControlName="officialFirmName" class="w-full" />
                 </div>
-            </p-tabpanel>
-
-            <!-- Sekme 3: İletişim -->
-            <p-tabpanel value="2" header="İletişim">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; padding:0.5rem 0;"
-                     [formGroup]="contactForm">
-
-                    <div class="field">
-                        <label>Ad</label>
-                        <input pInputText formControlName="name" class="w-full" />
-                    </div>
-
-                    <div class="field">
-                        <label>Soyad</label>
-                        <input pInputText formControlName="surname" class="w-full" />
-                    </div>
-
-                    <div class="field">
-                        <label>Görevi / Rolü</label>
-                        <input pInputText formControlName="role" class="w-full" placeholder="ör. Firma Sahibi" />
-                    </div>
-
-                    <div class="field">
-                        <label>Telefon</label>
-                        <input pInputText formControlName="phone" class="w-full" placeholder="0212 000 00 00" />
-                    </div>
-
-                    <div class="field">
-                        <label>E-posta</label>
-                        <input pInputText formControlName="email" class="w-full" type="email" />
-                    </div>
-
-                    <div></div>
-
-                    <div class="field" style="grid-column:span 2;">
-                        <label>Notlar</label>
-                        <textarea pTextarea formControlName="notes" rows="3" class="w-full"></textarea>
-                    </div>
-
+                <div class="field">
+                    <label>Vergi No <span class="req">*</span></label>
+                    <p-inputnumber formControlName="taxNumber" [useGrouping]="false" styleClass="w-full"
+                                   [invalid]="!!(f['taxNumber'].invalid && f['taxNumber'].touched)" />
+                    @if(f['taxNumber'].invalid && f['taxNumber'].touched) {
+                        <small class="err">Zorunlu alan.</small>
+                    }
                 </div>
-            </p-tabpanel>
+                <div class="field">
+                    <label>Vergi Dairesi</label>
+                    <input pInputText formControlName="taxOffice" class="w-full" />
+                </div>
+                <div class="field">
+                    <label>Firma Yetkilisi</label>
+                    <input pInputText formControlName="firmOfficial" class="w-full" />
+                </div>
+                <div class="field">
+                    <label>Firma No</label>
+                    <input pInputText formControlName="firmNo" class="w-full" />
+                </div>
+                <div class="field">
+                    <label>Faks</label>
+                    <input pInputText formControlName="faxNumber" class="w-full" />
+                </div>
+                <div class="field">
+                    <label>CE Sertifika No</label>
+                    <input pInputText formControlName="ceCertificateNo" class="w-full" />
+                </div>
+                <div class="field">
+                    <label>TS No</label>
+                    <input pInputText formControlName="tsNo" class="w-full" />
+                </div>
+                <div class="field">
+                    <label>TSE No</label>
+                    <input pInputText formControlName="tseNo" class="w-full" />
+                </div>
+                <div class="field">
+                    <label>HYB No</label>
+                    <input pInputText formControlName="hybNo" class="w-full" />
+                </div>
+                <div class="field">
+                    <label>DYB No</label>
+                    <input pInputText formControlName="dybNo" class="w-full" />
+                </div>
+                <div class="field">
+                    <label>TSE Sertifika Bitiş</label>
+                    <p-datepicker formControlName="tseCertificateExpireDate"
+                                  dateFormat="dd.mm.yy" styleClass="w-full" [showIcon]="true" />
+                </div>
+                <div class="field">
+                    <label>HYB Sertifika Bitiş</label>
+                    <p-datepicker formControlName="hybCertificateExpireDate"
+                                  dateFormat="dd.mm.yy" styleClass="w-full" [showIcon]="true" />
+                </div>
+            </div>
 
-        </p-tabs>
-    </form>
+            <!-- Adres -->
+            <div class="section-title" style="margin-top:1.25rem;">Adres Bilgileri</div>
+            <div class="form-grid" [formGroup]="addrForm">
+                <div class="field">
+                    <label>Adres Etiketi</label>
+                    <input pInputText formControlName="label" class="w-full" placeholder="ör. Merkez" />
+                </div>
+                <div class="field">
+                    <label>İl</label>
+                    <p-select formControlName="provinceId" [options]="provinces"
+                              optionLabel="name" optionValue="id" placeholder="İl seçin"
+                              styleClass="w-full" [filter]="true"
+                              (onChange)="onProvinceChange($event.value, undefined)" />
+                </div>
+                <div class="field">
+                    <label>İlçe</label>
+                    <p-select formControlName="districtId" [options]="districts"
+                              optionLabel="name" optionValue="id" placeholder="İlçe seçin"
+                              styleClass="w-full" [filter]="true"
+                              (onChange)="onDistrictChange($event.value)" />
+                </div>
+                <div class="field">
+                    <label>Mahalle</label>
+                    <p-select formControlName="neighbourhoodId" [options]="neighbourhoods"
+                              optionLabel="name" optionValue="id" placeholder="Mahalle seçin"
+                              styleClass="w-full" [filter]="true" />
+                </div>
+                <div class="field">
+                    <label>Posta Kodu</label>
+                    <p-inputnumber formControlName="postalCode" [useGrouping]="false" styleClass="w-full" />
+                </div>
+                <div class="field">
+                    <label>Sokak / Cadde</label>
+                    <input pInputText formControlName="street" class="w-full" />
+                </div>
+                <div class="field">
+                    <label>Bina No</label>
+                    <input pInputText formControlName="buildingNo" class="w-full" />
+                </div>
+                <div class="field">
+                    <label>Kapı No</label>
+                    <input pInputText formControlName="doorNo" class="w-full" />
+                </div>
+                <div class="field" style="grid-column:span 2;">
+                    <label>Tam Adres</label>
+                    <textarea pTextarea formControlName="fullAddress" rows="2" class="w-full"></textarea>
+                </div>
+            </div>
 
-    <ng-template #footer>
-        <p-button label="İptal" severity="secondary" [text]="true" (onClick)="showDialog = false" />
+            <!-- İletişim -->
+            <div class="section-title" style="margin-top:1.25rem;">İletişim Kişisi</div>
+            <div class="form-grid" [formGroup]="contactForm">
+                <div class="field">
+                    <label>Ad</label>
+                    <input pInputText formControlName="name" class="w-full" />
+                </div>
+                <div class="field">
+                    <label>Soyad</label>
+                    <input pInputText formControlName="surname" class="w-full" />
+                </div>
+                <div class="field">
+                    <label>Görevi / Rolü</label>
+                    <input pInputText formControlName="role" class="w-full" />
+                </div>
+                <div class="field">
+                    <label>Telefon</label>
+                    <input pInputText formControlName="phone" class="w-full" />
+                </div>
+                <div class="field">
+                    <label>E-posta</label>
+                    <input pInputText formControlName="email" class="w-full" type="email" />
+                </div>
+                <div class="field">
+                    <label>Notlar</label>
+                    <textarea pTextarea formControlName="notes" rows="2" class="w-full"></textarea>
+                </div>
+            </div>
+
+        </form>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Vazgeç" icon="pi pi-times" [text]="true" (onClick)="showDialog = false" />
         <p-button [label]="isEdit ? 'Güncelle' : 'Kaydet'" icon="pi pi-check" (onClick)="onSubmit()" />
     </ng-template>
 
 </p-dialog>
 
 <style>
-    .field { display:flex; flex-direction:column; gap:0.35rem; }
-    .field label { font-size:0.82rem; font-weight:600; color:var(--text-color-secondary); }
+.section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--p-primary-color);
+    border-bottom: 2px solid var(--p-primary-color);
+    padding-bottom: 0.3rem;
+    margin-bottom: 0.75rem;
+}
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem 1rem;
+}
+.field { display: flex; flex-direction: column; gap: 0.3rem; }
+.field label { font-size: 0.82rem; font-weight: 600; color: var(--text-color-secondary); }
+.req { color: red; }
+.err { color: red; font-size: 0.78rem; }
 </style>
