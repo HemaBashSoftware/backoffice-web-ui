@@ -23,20 +23,42 @@ export class AppMenu {
         const mod = this.activeModuleService.activeModule();
         const prefix = mod ? `/${mod}` : '';
 
+        const systemItem: MenuItem = {
+            label: 'Sistem',
+            items: [
+                { label: 'Modül Seçimi', icon: 'pi pi-fw pi-th-large', routerLink: ['/'] },
+            ]
+        };
+
+        if (mod === 'ysc') {
+            return [
+                {
+                    label: 'YSC',
+                    items: [
+                        { label: 'Dashboard',  icon: 'pi pi-fw pi-home',  routerLink: ['/ysc'] },
+                        { label: 'Müşteriler', icon: 'pi pi-fw pi-users', routerLink: ['/ysc/customer'] },
+                    ]
+                },
+                {
+                    label: 'Tanım',
+                    items: [
+                        { label: 'YSC Tipleri',        icon: 'pi pi-fw pi-tags',   routerLink: ['/ysc/definitions/ysc-types'] },
+                        { label: 'Standart Numaralar', icon: 'pi pi-fw pi-hashtag', routerLink: ['/ysc/definitions/standart-numbers'] },
+                    ]
+                },
+                systemItem,
+            ];
+        }
+
         return [
             {
                 label: mod ? mod.toUpperCase() : 'Menü',
                 items: [
-                    { label: 'Dashboard',   icon: 'pi pi-fw pi-home',  routerLink: [`${prefix}`] },
-                    { label: 'Müşteriler',  icon: 'pi pi-fw pi-users', routerLink: [`${prefix}/customer`] },
+                    { label: 'Dashboard',  icon: 'pi pi-fw pi-home',  routerLink: [prefix || '/'] },
+                    { label: 'Müşteriler', icon: 'pi pi-fw pi-users', routerLink: [`${prefix}/customer`] },
                 ]
             },
-            {
-                label: 'Sistem',
-                items: [
-                    { label: 'Modül Seçimi', icon: 'pi pi-fw pi-th-large', routerLink: ['/'] },
-                ]
-            }
+            systemItem,
         ];
     });
 

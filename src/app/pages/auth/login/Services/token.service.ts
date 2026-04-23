@@ -15,11 +15,11 @@ export class TokenService {
 
     if (this.storageService.getItem("refreshToken") !== null) {
       return this.httpClient
-        .post<any>(environment.getApiUrl + "/Auth/refresh-token", { refreshToken: this.storageService.getItem("refreshToken") })
+        .post<any>(environment.identityApiUrl + "/auth/refresh-token", { refreshToken: this.storageService.getItem("refreshToken") })
         .pipe(tap(res => {
-          if (res.success) {
-            this.storageService.setToken(res.data.token);
-            this.storageService.setItem("refreshToken", res.data.refreshToken);
+          if (res.token) {
+            this.storageService.setToken(res.token);
+            this.storageService.setItem("refreshToken", res.refreshToken);
           }
         }));
     }

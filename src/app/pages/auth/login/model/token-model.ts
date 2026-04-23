@@ -1,15 +1,6 @@
-export class TokenModel {
-    success: boolean = false;
-    message: string = '';
-    data: Data | undefined;
-
-
-}
-
-export class Data {
-    expiration: string = '';
+export class TokenResponse {
     token: string = '';
-    claims: string[] | undefined;
+    expiration: string = '';
     refreshToken: string = '';
-  
+    claims: string[] = [];
 }

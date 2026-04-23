@@ -14,20 +14,20 @@ export class HttpEntityRepositoryService<T> {
   /// /api/[controller] - GET
   getAll(_url: string): Observable<T[]> {
     return this.httpClient.get<T[]>( 
-      environment.getApiUrl + _url);
+      environment.identityApiUrl + _url);
   }
  
   //api/[controller]/:id - GET
   get(_url: string, id?: number): Observable<T> {
     return this.httpClient.get<T>(
-      environment.getApiUrl +  _url + ((id != undefined && id != null) ? + id : ""),
+      environment.identityApiUrl +  _url + ((id != undefined && id != null) ? + id : ""),
     );
   }
 
   /// /api/[controller] - POST
   add(_url: string, _content: any): Observable<T> {
     return this.httpClient.post<T>(
-      environment.getApiUrl +  _url,
+      environment.identityApiUrl +  _url,
       _content,
     );
   }
@@ -35,7 +35,7 @@ export class HttpEntityRepositoryService<T> {
   // /api/[controller] - PUT
   update(_url: string, _content: any): Observable<T> {
     return this.httpClient.put<T>(
-      environment.getApiUrl + _url,
+      environment.identityApiUrl + _url,
       _content,
     );
   }
@@ -43,7 +43,7 @@ export class HttpEntityRepositoryService<T> {
   // /api/[controller]/:id - DELETE
   delete(_url: string, id: number): Observable<T> {
     return this.httpClient.delete<T>(
-      environment.getApiUrl + _url  + id,
+      environment.identityApiUrl + _url  + id,
     );
   }
 }

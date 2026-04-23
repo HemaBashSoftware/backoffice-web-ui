@@ -16,7 +16,7 @@ export class TranslationService implements TranslateLoader {
   constructor(private http: HttpClient) { }
 
   getTranslation(lang: string): Observable<any> {
-    return this.http.get(environment.getApiUrl + `/translates/languages/${lang}`);
+    return this.http.get(environment.identityApiUrl + `/translates/languages/${lang}`);
   }
 
 }
