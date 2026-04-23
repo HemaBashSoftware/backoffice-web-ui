@@ -1,47 +1,106 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { CardModule } from 'primeng/card';
-import { ButtonModule } from 'primeng/button';
 
 @Component({
     selector: 'app-sanayi-dashboard',
     standalone: true,
-    imports: [CommonModule, CardModule, ButtonModule],
+    imports: [CommonModule],
+    styles: [`
+        .stat-card {
+            background: var(--surface-card);
+            border: 1px solid var(--surface-border);
+            border-radius: 14px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .stat-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-color);
+            line-height: 1;
+        }
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-color-secondary);
+        }
+        .stat-trend {
+            font-size: 0.78rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            margin-top: 0.25rem;
+        }
+    `],
     template: `
-        <div class="p-4">
-            <div class="mb-5">
-                <h2 class="text-3xl font-bold text-900 mb-1">Sanayi</h2>
-                <p class="text-600">Sanayi Operasyonları</p>
+        <div style="padding: 1.75rem;">
+
+            <div style="margin-bottom: 2rem;">
+                <h2 style="font-size:1.4rem; font-weight:700; color:var(--text-color); margin:0 0 0.3rem;">Sanayi Dashboard</h2>
+                <p style="color:var(--text-color-secondary); font-size:0.875rem; margin:0;">Sanayi Operasyonları</p>
             </div>
 
-            <div class="grid">
-                @for (item of quickLinks; track item.route) {
-                    <div class="col-12 sm:col-6 lg:col-3 p-2">
-                        <p-card styleClass="cursor-pointer hover:shadow-4 transition-all transition-duration-200"
-                            (click)="router.navigateByUrl(item.route)">
-                            <div class="flex align-items-center gap-3">
-                                <div class="border-round p-3" [ngClass]="item.color">
-                                    <i [class]="item.icon" style="font-size: 1.5rem;"></i>
-                                </div>
-                                <div>
-                                    <div class="font-semibold text-900">{{ item.label }}</div>
-                                    <div class="text-sm text-600">{{ item.sub }}</div>
-                                </div>
-                            </div>
-                        </p-card>
+            <div style="margin-bottom: 1rem;">
+                <span style="font-size:0.8rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-color-secondary);">Müşteri Özeti</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:1rem;">
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(59,130,246,0.1);">
+                        <i class="pi pi-users" style="color:#3b82f6;"></i>
                     </div>
-                }
+                    <div>
+                        <div class="stat-value">376</div>
+                        <div class="stat-label">Toplam Müşteri</div>
+                    </div>
+                    <div class="stat-trend" style="color:#3b82f6;">
+                        <i class="pi pi-arrow-up" style="font-size:0.7rem;"></i>
+                        <span>Bu ay 6 yeni kayıt</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(16,185,129,0.1);">
+                        <i class="pi pi-check-circle" style="color:#10b981;"></i>
+                    </div>
+                    <div>
+                        <div class="stat-value">298</div>
+                        <div class="stat-label">Aktif Müşteri</div>
+                    </div>
+                    <div class="stat-trend" style="color:#10b981;">
+                        <i class="pi pi-arrow-up" style="font-size:0.7rem;"></i>
+                        <span>%79.3 aktif oran</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(239,68,68,0.1);">
+                        <i class="pi pi-times-circle" style="color:#ef4444;"></i>
+                    </div>
+                    <div>
+                        <div class="stat-value">78</div>
+                        <div class="stat-label">Pasif Müşteri</div>
+                    </div>
+                    <div class="stat-trend" style="color:#ef4444;">
+                        <i class="pi pi-arrow-down" style="font-size:0.7rem;"></i>
+                        <span>%20.7 pasif oran</span>
+                    </div>
+                </div>
+
             </div>
         </div>
     `
 })
-export class SanayiDashboardComponent {
-    quickLinks = [
-        { label: 'Üretim', sub: 'Üretim takibi', icon: 'pi pi-cog', route: '/sanayi/production', color: 'bg-orange-100 text-orange-600' },
-        { label: 'Stok', sub: 'Ham madde & ürün stok', icon: 'pi pi-box', route: '/sanayi/stock', color: 'bg-teal-100 text-teal-600' },
-        { label: 'Tedarik', sub: 'Tedarikçi yönetimi', icon: 'pi pi-truck', route: '/sanayi/supply', color: 'bg-purple-100 text-purple-600' },
-    ];
-
-    constructor(public router: Router) {}
-}
+export class SanayiDashboardComponent {}

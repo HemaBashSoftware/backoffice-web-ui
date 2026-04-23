@@ -37,7 +37,29 @@ export class AuthService {
         this.setClaims();
     }
 
+    // ── MOCK ── backend hazır olunca bu bloğu ve mockLogin() silin ──────────
+    private mockLogin(loginUser: LoginUser): void {
+        const payloadObj = {
+            'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name': loginUser.email.split('@')[0],
+            'UserType': 'Admin',
+            'isPasswordChangeRequired': 'False',
+            'exp': 9999999999
+        };
+        const b64 = (s: string) => btoa(unescape(encodeURIComponent(s)))
+            .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+        const fakeToken = `${b64('{"alg":"HS256","typ":"JWT"}')}.${b64(JSON.stringify(payloadObj))}.mock`;
+        this.storageService.setToken(fakeToken);
+        this.userName = loginUser.email.split('@')[0];
+        this.userType = 'Admin';
+        this.isPasswordChangeRequired = 'False';
+        this.sharedService.sendChangeUserNameEvent();
+        this.toastService.success("LOGIN.LOGIN_SUCCESS");
+        this.router.navigateByUrl('/');
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     login(loginUser: LoginUser) {
+        this.mockLogin(loginUser); return; // MOCK — backend hazır olunca bu satırı silin
 
         let headers = new HttpHeaders();
         headers = headers.append("Content-Type", "application/json")
