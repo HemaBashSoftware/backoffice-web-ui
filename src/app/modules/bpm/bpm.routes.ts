@@ -3,6 +3,6 @@ import { BpmDashboardComponent } from './pages/dashboard/bpm-dashboard.component
 
 export default [
     { path: '', component: BpmDashboardComponent },
-    // Feature sayfaları eklenince buraya gelecek:
-    // { path: 'customer', loadChildren: () => import('./pages/customer/customer.routes') },
+    { path: 'customer', loadComponent: () => import('./pages/customer/customer.component').then(m => m.BpmCustomerComponent) },
+    { path: 'customer/:id', loadComponent: () => import('./pages/customer/customer-detail/customer-detail.component').then(m => m.BpmCustomerDetailComponent) }
 ] as Routes;

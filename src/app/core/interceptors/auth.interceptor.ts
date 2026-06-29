@@ -75,16 +75,22 @@ export class AuthInterceptorService implements HttpInterceptor {
           switchMap((token: any) => {
             console.log("Token Yenilendi.")
             this.isRefreshing = false;
-            this.refreshTokenSubject.next(token.data.token);
+            this.refreshTokenSubject.next(token.token);
             return next.handle(this.addToken(req))
           }),
-          catchError(err => {
+          catchError((err: HttpErrorResponse) => {
             this.isRefreshing = false;
             this.storageService.removeToken();
             this.storageService.removeItem("lang");
 
-            this.toastWarning("Refresh Token Not Found");
-            this.toastWarning(err);
+            let errorMessage = "Oturum süreniz doldu, lütfen tekrar giriş yapın.";
+            if (err && err.error && err.error.message) {
+              errorMessage = err.error.message;
+            } else if (err && err.message) {
+              errorMessage = err.message;
+            }
+
+            this.toastWarning(errorMessage);
             this.router.navigate(["auth/login"]);
             return throwError(() => err);
           })
@@ -110,7 +116,7 @@ export class AuthInterceptorService implements HttpInterceptor {
   }
 
   private toastWarning(message: string, summary?: string) {
-    
+
     this.messageService.add({ severity: 'warn', summary: 'Message', detail: message });
   }
 

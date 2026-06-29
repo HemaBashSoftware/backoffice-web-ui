@@ -1,59 +1,40 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { TableModule, Table } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { ToolbarModule } from 'primeng/toolbar';
-import { DialogModule } from 'primeng/dialog';
+import { ActivatedRoute, Router } from '@angular/router';
+
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ToastModule } from 'primeng/toast';
-import { TabsModule } from 'primeng/tabs';
 import { DatePickerModule } from 'primeng/datepicker';
-import { ConfirmationService, MessageService } from 'primeng/api';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
 
-import { Router } from '@angular/router';
 import { YscCustomerService } from '../../services/customer.service';
 import { AddressLookupService } from '../../services/address-lookup.service';
 import { Customer } from '../../models/customer.model';
-import { Province } from '../../models/address-lookup.model';
-import { District } from '../../models/address-lookup.model';
-import { Neighbourhood } from '../../models/address-lookup.model';
+import { Province, District, Neighbourhood } from '../../models/address-lookup.model';
+import { BaseCrudComponent } from '../../../../shared/classes/base-crud.component';
+import { ICrudService } from '../../../../shared/models/crud-service.interface';
+import { CrudPageComponent } from '../../../../shared/components/crud-page/crud-page.component';
 
 @Component({
     selector: 'app-ysc-customer',
     standalone: true,
-    providers: [MessageService, ConfirmationService],
     imports: [
         CommonModule, FormsModule, ReactiveFormsModule,
-        TableModule, ButtonModule, ToolbarModule, DialogModule, InputTextModule,
-        SelectModule, TextareaModule, ConfirmDialogModule, ToastModule,
-        DatePickerModule, InputNumberModule,
-        IconFieldModule, InputIconModule,
+        InputTextModule, SelectModule, TextareaModule, DatePickerModule, InputNumberModule,
+        CrudPageComponent
     ],
     templateUrl: './customer.component.html',
 })
-export class YscCustomerComponent implements OnInit {
-    @ViewChild('dt') dt!: Table;
-
+export class YscCustomerComponent extends BaseCrudComponent<Customer> {
+    
     cols = [
         { field: 'name',         header: 'Firma Adı' },
         { field: 'taxNumber',    header: 'Vergi No' },
         { field: 'taxOffice',    header: 'Vergi Dairesi' },
         { field: 'firmOfficial', header: 'Yetkili' },
     ];
-
-    list: Customer[] = [];
-    loading = false;
-    showDialog = false;
-    isEdit = false;
-
-    form!: FormGroup;
 
     provinces: Province[] = [];
     districts: District[] = [];
@@ -64,17 +45,20 @@ export class YscCustomerComponent implements OnInit {
         private service: YscCustomerService,
         private addressService: AddressLookupService,
         private fb: FormBuilder,
-        private messageService: MessageService,
-        private confirmationService: ConfirmationService,
-    ) {}
-
-    ngOnInit() {
-        this.buildForm();
-        this.loadList();
-        this.addressService.getProvinces().subscribe(data => this.provinces = data);
+        private route: ActivatedRoute,
+    ) {
+        super();
     }
 
-    buildForm() {
+    protected getService(): ICrudService<Customer> {
+        return this.service;
+    }
+
+    protected getEntityName(): string {
+        return 'Müşteri';
+    }
+
+    protected buildForm() {
         this.form = this.fb.group({
             id: [0],
             name: ['', Validators.required],
@@ -110,58 +94,51 @@ export class YscCustomerComponent implements OnInit {
                 phone: [''],
                 notes: [''],
             }),
+            recordStatus: [1]
         });
     }
 
-    loadList() {
-        this.loading = true;
-        this.service.getAll().subscribe({
-            next: data => { this.list = data; this.loading = false; },
-            error: () => { this.loading = false; this.messageService.add({ severity: 'error', summary: 'Hata', detail: 'Veriler yüklenemedi.' }); }
+    override ngOnInit() {
+        super.ngOnInit();
+        this.addressService.getProvinces().subscribe(data => this.provinces = data);
+
+        this.route.queryParams.subscribe(params => {
+            const editId = params['edit'];
+            if (editId) {
+                this.service.getById(Number(editId)).subscribe(c => this.openEdit(c));
+            }
         });
     }
 
-    openNew() {
-        this.isEdit = false;
-        this.form.reset({ id: 0 });
+    protected override onAfterOpenNew() {
         this.districts = [];
         this.neighbourhoods = [];
-        this.showDialog = true;
     }
 
-    openEdit(customer: Customer) {
-        this.isEdit = true;
-        this.service.getById(customer.id).subscribe({
-            next: data => {
-                // Önce adres dışı alanları patch et
-                this.form.patchValue({ ...data, customerAddress: null });
-                const addr = data.customerAddress;
-                if (addr?.provinceId) {
-                    // Cascade: il → ilçe → mahalle; her adım bir önceki yüklenince patch yapar
-                    this.onProvinceChange(addr.provinceId, addr.districtId ?? undefined);
-                    // neighbourhoodId, onDistrictChange içinde districts yüklenince patch edilir
-                    // Mahalle ayrıca beklemeli çünkü getNeighbourhoods async
-                    if (addr.districtId) {
-                        this.addressService.getNeighbourhoods(addr.districtId).subscribe(nhoods => {
-                            this.neighbourhoods = nhoods;
-                            this.form.get('customerAddress.neighbourhoodId')!.enable();
-                            this.form.get('customerAddress.neighbourhoodId')!.setValue(addr.neighbourhoodId ?? null);
-                        });
-                    }
-                    // Geri kalan adres alanlarını direkt patch et
-                    this.form.get('customerAddress')!.patchValue({
-                        label: addr.label,
-                        street: addr.street,
-                        buildingNo: addr.buildingNo,
-                        doorNo: addr.doorNo,
-                        postalCode: addr.postalCode,
-                        fullAddress: addr.fullAddress,
-                    });
-                }
-                this.showDialog = true;
-            },
-            error: () => this.messageService.add({ severity: 'error', summary: 'Hata', detail: 'Kayıt yüklenemedi.' })
-        });
+    protected override onAfterOpenEdit(data: Customer) {
+        // Önce adres dışı alanları patch et
+        this.form.patchValue({ ...data, customerAddress: null });
+        const addr = data.customerAddress;
+        if (addr?.provinceId) {
+            // Cascade: il → ilçe → mahalle
+            this.onProvinceChange(addr.provinceId, addr.districtId ?? undefined);
+            if (addr.districtId) {
+                this.addressService.getNeighbourhoods(addr.districtId).subscribe(nhoods => {
+                    this.neighbourhoods = nhoods;
+                    this.form.get('customerAddress.neighbourhoodId')!.enable();
+                    this.form.get('customerAddress.neighbourhoodId')!.setValue(addr.neighbourhoodId ?? null);
+                });
+            }
+            // Geri kalan adres alanlarını patch et
+            this.form.get('customerAddress')!.patchValue({
+                label: addr.label,
+                street: addr.street,
+                buildingNo: addr.buildingNo,
+                doorNo: addr.doorNo,
+                postalCode: addr.postalCode,
+                fullAddress: addr.fullAddress,
+            });
+        }
     }
 
     onProvinceChange(provinceId: number, patchDistrictId?: number) {
@@ -196,50 +173,10 @@ export class YscCustomerComponent implements OnInit {
         });
     }
 
-    onSubmit() {
-        if (this.form.invalid) {
-            this.form.markAllAsTouched();
-            return;
-        }
-        const data = this.form.getRawValue() as Customer;
-        const req = this.isEdit ? this.service.update(data) : this.service.add(data);
-        req.subscribe({
-            next: () => {
-                this.messageService.add({ severity: 'success', summary: 'Başarılı', detail: this.isEdit ? 'Güncellendi.' : 'Eklendi.' });
-                this.showDialog = false;
-                this.loadList();
-            },
-            error: () => this.messageService.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız.' })
-        });
+    goToDetail(row: Customer) {
+        this.router.navigate(['/ysc/customer', row.id]);
     }
-
-    confirmDelete(customer: Customer) {
-        this.confirmationService.confirm({
-            message: `<strong>${customer.name}</strong> silinecek. Emin misiniz?`,
-            header: 'Silme Onayı',
-            icon: 'pi pi-exclamation-triangle',
-            acceptLabel: 'Evet, Sil',
-            rejectLabel: 'İptal',
-            acceptButtonStyleClass: 'p-button-danger',
-            accept: () => {
-                this.service.delete(customer.id).subscribe({
-                    next: () => {
-                        this.messageService.add({ severity: 'success', summary: 'Silindi', detail: 'Müşteri silindi.' });
-                        this.loadList();
-                    },
-                    error: () => this.messageService.add({ severity: 'error', summary: 'Hata', detail: 'Silme başarısız.' })
-                });
-            }
-        });
-    }
-
-    onGlobalFilter(event: Event) {
-        this.dt.filterGlobal((event.target as HTMLInputElement).value, 'contains');
-    }
-
-    goToDetail(id: number) { this.router.navigate(['/ysc/customer', id]); }
 
     get addrForm() { return this.form.get('customerAddress') as FormGroup; }
     get contactForm() { return this.form.get('customerContact') as FormGroup; }
-    get f() { return this.form.controls; }
 }

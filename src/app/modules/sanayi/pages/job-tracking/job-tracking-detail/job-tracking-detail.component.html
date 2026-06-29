@@ -1,0 +1,305 @@
+<p-toast/>
+<p-confirmdialog/>
+
+<div class="mb-6 flex items-center gap-4">
+    <button (click)="goBack()" class="text-slate-400 hover:text-slate-800 transition flex items-center justify-center w-10 h-10 rounded-full hover:bg-slate-100">
+        <i class="pi pi-arrow-left text-xl"></i>
+    </button>
+    <div>
+        <h1 class="text-2xl font-bold text-slate-800">{{ firmData?.companyName }} İş Geçmişi</h1>
+        <p class="text-slate-500 text-sm mt-1">Müşteri ID: {{ firmData?.id }}</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <span class="text-slate-500 text-sm font-medium">Devam Eden İşler</span>
+        <span class="text-2xl font-bold text-blue-600">{{ ongoingCount }}</span>
+    </div>
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <span class="text-slate-500 text-sm font-medium">Tamamlanan İşler</span>
+        <span class="text-2xl font-bold text-green-600">{{ totalCompletedCount }}</span>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+    <p-toolbar styleClass="bg-slate-50 border-b border-slate-100 p-4 border-none">
+        <ng-template #start>
+            <div class="flex gap-2">
+                <button (click)="setFilter('all')" 
+                        [ngClass]="activeFilter === 'all' ? 'bg-blue-100 border-blue-200 text-blue-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'"
+                        class="px-3 py-1.5 border rounded text-sm font-medium transition cursor-pointer">
+                    Tümü
+                </button>
+                <button (click)="setFilter('ongoing')" 
+                        [ngClass]="activeFilter === 'ongoing' ? 'bg-blue-100 border-blue-200 text-blue-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'"
+                        class="px-3 py-1.5 border rounded text-sm font-medium transition cursor-pointer">
+                    Devam Edenler
+                </button>
+            </div>
+        </ng-template>
+        <ng-template #end>
+            <p-button label="Yeni İş Ekle" icon="pi pi-plus" severity="success" size="small" (onClick)="openNewJob()"></p-button>
+        </ng-template>
+    </p-toolbar>
+
+    <p-table [value]="jobHistoryList" [paginator]="true" [rows]="10" [rowHover]="true"
+        [loading]="loading"
+        responsiveLayout="scroll">
+        
+        <ng-template #header>
+            <tr class="text-slate-500 text-sm border-b border-slate-200">
+                <th pSortableColumn="plate" class="p-4 font-medium">Plaka <p-sortIcon field="plate"></p-sortIcon></th>
+                <th pSortableColumn="label" class="p-4 font-medium">İş Tipi (Etiket) <p-sortIcon field="label"></p-sortIcon></th>
+                <th pSortableColumn="status" class="p-4 font-medium">Durum <p-sortIcon field="status"></p-sortIcon></th>
+                <th pSortableColumn="dateOpened" class="p-4 font-medium">Tarih <p-sortIcon field="dateOpened"></p-sortIcon></th>
+                <th pSortableColumn="totalFee" class="p-4 font-medium">Tutar <p-sortIcon field="totalFee"></p-sortIcon></th>
+                <th class="p-4 font-medium text-center" style="width: 150px;">İşlem</th>
+            </tr>
+        </ng-template>
+
+        <ng-template #body let-job>
+            <tr class="border-b border-slate-50 hover:bg-slate-50 text-sm text-slate-700">
+                <td class="p-4 font-bold">{{ job.plate }}</td>
+                <td class="p-4">{{ job.label || '-' }}</td>
+                <td class="p-4">
+                    <span [ngClass]="isOngoing(job.status) ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'" 
+                          class="px-2 py-1.5 rounded text-xs font-bold">
+                        {{ getDisplayStatus(job.status) }}
+                    </span>
+                </td>
+                <td class="p-4 text-slate-500">{{ job.dateOpened | date:'dd.MM.yyyy' }}</td>
+                <td class="p-4">{{ job.totalFee | currency:'TRY':'symbol':'1.2-2' }}</td>
+                <td class="p-4 text-center">
+                    <div style="display:flex; gap:0.25rem; justify-content:center;">
+                        <p-button pTooltip="Detay / Alt Kalemler" icon="pi pi-list" severity="info" [text]="true" [rounded]="true" size="small" (onClick)="openManageJob(job)" />
+                        <p-button pTooltip="Düzenle" icon="pi pi-pencil" severity="warn" [text]="true" [rounded]="true" size="small" (onClick)="openEditJob(job)" />
+                        <p-button pTooltip="Sil" icon="pi pi-trash" severity="danger" [text]="true" [rounded]="true" size="small" (onClick)="confirmDeleteJob(job)" />
+                    </div>
+                </td>
+            </tr>
+        </ng-template>
+
+        <ng-template #emptymessage>
+            <tr>
+                <td colspan="6" class="text-center py-8">
+                    <i class="pi pi-inbox text-3xl text-slate-400"></i>
+                    <p class="text-slate-500 mt-2">Bu firmaya ait iş kaydı bulunamadı.</p>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
+
+<!-- Main Job Dialog -->
+<p-dialog [(visible)]="showJobDialog" [modal]="true" [style]="{width:'650px'}" [header]="isEditJob ? 'İş Emri Düzenle' : 'Yeni İş Emri Ekle'">
+    <form [formGroup]="jobForm" style="padding-top:1rem;">
+        <div class="form-grid">
+            <div class="field" style="grid-column: span 2;">
+                <label>Araç <span class="req">*</span></label>
+                <p-dropdown formControlName="vehicleId" [options]="vehicles" optionLabel="plate" optionValue="id" placeholder="Araç Seçiniz" appendTo="body" styleClass="w-full"
+                    [ngClass]="{'ng-invalid ng-dirty': jobForm.controls['vehicleId'].invalid && jobForm.controls['vehicleId'].touched}">
+                </p-dropdown>
+            </div>
+            
+            <div class="field">
+                <label>Kilometre <span class="req">*</span></label>
+                <p-inputNumber formControlName="vehicleKilometer" class="w-full"
+                    [ngClass]="{'ng-invalid ng-dirty': jobForm.controls['vehicleKilometer'].invalid && jobForm.controls['vehicleKilometer'].touched}"></p-inputNumber>
+            </div>
+
+            <div class="field">
+                <label>Durum <span class="req">*</span></label>
+                <p-dropdown formControlName="status" [options]="statusOptions" appendTo="body" styleClass="w-full"></p-dropdown>
+            </div>
+
+            <div class="field">
+                <label>Etiket (Örn: Periyodik Bakım)</label>
+                <input pInputText formControlName="label" class="w-full" />
+            </div>
+
+            <div class="field">
+                <label>Kayıt Tarihi <span class="req">*</span></label>
+                <input type="date" pInputText formControlName="dateOpened" class="w-full" />
+            </div>
+
+            <div class="field" style="grid-column: span 2;">
+                <label>Açıklama</label>
+                <textarea pInputTextarea formControlName="description" rows="3" class="w-full"></textarea>
+            </div>
+
+            <!-- Fiyatlama -->
+            @if(isEditJob) {
+                <div class="field">
+                    <label>Toplam İşçilik Tutarı</label>
+                    <p-inputNumber formControlName="totalLaborFee" mode="currency" currency="TRY" locale="tr-TR" class="w-full"></p-inputNumber>
+                </div>
+                <div class="field">
+                    <label>Toplam Ürün Tutarı</label>
+                    <p-inputNumber formControlName="totalProductFee" mode="currency" currency="TRY" locale="tr-TR" class="w-full"></p-inputNumber>
+                </div>
+                <div class="field">
+                    <label>Genel Toplam Tutar</label>
+                    <p-inputNumber formControlName="totalFee" mode="currency" currency="TRY" locale="tr-TR" class="w-full"></p-inputNumber>
+                </div>
+                <div class="field">
+                    <label>İndirim Tutarı</label>
+                    <p-inputNumber formControlName="discount" mode="currency" currency="TRY" locale="tr-TR" class="w-full"></p-inputNumber>
+                </div>
+            }
+        </div>
+    </form>
+    <ng-template pTemplate="footer">
+        <p-button label="İptal" icon="pi pi-times" severity="secondary" [text]="true" (onClick)="showJobDialog = false" />
+        <p-button [label]="isEditJob ? 'Güncelle' : 'Kaydet'" icon="pi pi-check" (onClick)="saveJob()" />
+    </ng-template>
+</p-dialog>
+
+
+<!-- Sub Entities Dialog -->
+<p-dialog [(visible)]="showSubDialog" [modal]="true" [style]="{width:'800px', minHeight: '500px'}" [header]="'İş Emri Alt Kalemleri: ' + (selectedDetailJob?.label || selectedDetailJob?.plate)">
+    <p-tabView>
+        <!-- İŞLEMLER -->
+        <p-tabPanel header="İşlemler (İşçilik)">
+            <div class="flex justify-content-end mb-3">
+                <p-button label="Yeni İşlem" icon="pi pi-plus" size="small" (onClick)="openNewOperation()"></p-button>
+            </div>
+            <p-table [value]="operations" styleClass="p-datatable-sm" [emptyMessage]="'Kayıt bulunamadı.'">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>İşlem Adı</th>
+                        <th>Tutar</th>
+                        <th style="width: 100px; text-align: center;">Aksiyon</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-op>
+                    <tr>
+                        <td>{{op.operationName}}</td>
+                        <td>{{op.price | currency:'TRY':'symbol':'1.2-2'}}</td>
+                        <td style="text-align:center;">
+                            <p-button icon="pi pi-pencil" severity="warn" [text]="true" [rounded]="true" size="small" (onClick)="openEditOperation(op)"></p-button>
+                            <p-button icon="pi pi-trash" severity="danger" [text]="true" [rounded]="true" size="small" (onClick)="deleteOperation(op)"></p-button>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </p-tabPanel>
+
+        <!-- ÜRÜNLER / PARÇALAR -->
+        <p-tabPanel header="Kullanılan Parçalar">
+            <div class="flex justify-content-end mb-3">
+                <p-button label="Yeni Parça" icon="pi pi-plus" size="small" (onClick)="openNewProduct()"></p-button>
+            </div>
+            <p-table [value]="products" styleClass="p-datatable-sm" [emptyMessage]="'Kayıt bulunamadı.'">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Parça Adı</th>
+                        <th>Miktar</th>
+                        <th>Birim Fiyat</th>
+                        <th>Toplam</th>
+                        <th style="width: 100px; text-align: center;">Aksiyon</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-prod>
+                    <tr>
+                        <td>{{prod.productName}}</td>
+                        <td>{{prod.quantity}}</td>
+                        <td>{{prod.pricePerItem | currency:'TRY':'symbol':'1.2-2'}}</td>
+                        <td>{{(prod.quantity * prod.pricePerItem) | currency:'TRY':'symbol':'1.2-2'}}</td>
+                        <td style="text-align:center;">
+                            <p-button icon="pi pi-pencil" severity="warn" [text]="true" [rounded]="true" size="small" (onClick)="openEditProduct(prod)"></p-button>
+                            <p-button icon="pi pi-trash" severity="danger" [text]="true" [rounded]="true" size="small" (onClick)="deleteProduct(prod)"></p-button>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </p-tabPanel>
+
+        <!-- ÇALIŞANLAR -->
+        <p-tabPanel header="Görevli Çalışanlar">
+            <div class="flex justify-content-end mb-3">
+                <p-button label="Çalışan Ata" icon="pi pi-plus" size="small" (onClick)="openNewEmployee()"></p-button>
+            </div>
+            <p-table [value]="employees" styleClass="p-datatable-sm" [emptyMessage]="'Kayıt bulunamadı.'">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Çalışan Adı</th>
+                        <th style="width: 100px; text-align: center;">Aksiyon</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-emp>
+                    <tr>
+                        <td>{{emp.employeeName}}</td>
+                        <td style="text-align:center;">
+                            <p-button icon="pi pi-trash" severity="danger" [text]="true" [rounded]="true" size="small" (onClick)="deleteEmployee(emp)"></p-button>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </p-tabPanel>
+    </p-tabView>
+</p-dialog>
+
+
+<!-- Sub-entity Forms -->
+
+<p-dialog [(visible)]="showOperationDialog" [modal]="true" [style]="{width:'450px'}" [header]="isEditOperation ? 'İşlem Düzenle' : 'Yeni İşlem Ekle'">
+    <form [formGroup]="operationForm" style="padding-top:1rem;">
+        <div class="flex flex-column gap-3">
+            <div class="field">
+                <label>İşlem Adı <span style="color:red">*</span></label>
+                <input pInputText formControlName="operationName" class="w-full"
+                    [class.ng-invalid]="operationForm.controls['operationName'].invalid && operationForm.controls['operationName'].touched" />
+            </div>
+            <div class="field">
+                <label>Tutar <span style="color:red">*</span></label>
+                <p-inputNumber formControlName="price" mode="currency" currency="TRY" locale="tr-TR" class="w-full"></p-inputNumber>
+            </div>
+        </div>
+    </form>
+    <ng-template pTemplate="footer">
+        <p-button label="İptal" icon="pi pi-times" severity="secondary" [text]="true" (onClick)="showOperationDialog = false" />
+        <p-button [label]="isEditOperation ? 'Güncelle' : 'Kaydet'" icon="pi pi-check" (onClick)="saveOperation()" />
+    </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="showProductDialog" [modal]="true" [style]="{width:'450px'}" [header]="isEditProduct ? 'Parça Düzenle' : 'Yeni Parça Ekle'">
+    <form [formGroup]="productForm" style="padding-top:1rem;">
+        <div class="flex flex-column gap-3">
+            <div class="field">
+                <label>Parça Adı <span style="color:red">*</span></label>
+                <input pInputText formControlName="productName" class="w-full"
+                    [class.ng-invalid]="productForm.controls['productName'].invalid && productForm.controls['productName'].touched" />
+            </div>
+            <div class="field">
+                <label>Miktar <span style="color:red">*</span></label>
+                <p-inputNumber formControlName="quantity" class="w-full"></p-inputNumber>
+            </div>
+            <div class="field">
+                <label>Birim Fiyat <span style="color:red">*</span></label>
+                <p-inputNumber formControlName="pricePerItem" mode="currency" currency="TRY" locale="tr-TR" class="w-full"></p-inputNumber>
+            </div>
+        </div>
+    </form>
+    <ng-template pTemplate="footer">
+        <p-button label="İptal" icon="pi pi-times" severity="secondary" [text]="true" (onClick)="showProductDialog = false" />
+        <p-button [label]="isEditProduct ? 'Güncelle' : 'Kaydet'" icon="pi pi-check" (onClick)="saveProduct()" />
+    </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="showEmployeeDialog" [modal]="true" [style]="{width:'450px'}" header="Çalışan Ata">
+    <form [formGroup]="employeeForm" style="padding-top:1rem;">
+        <div class="flex flex-column gap-3">
+            <div class="field">
+                <label>Çalışan <span style="color:red">*</span></label>
+                <p-dropdown formControlName="employeeId" [options]="availableEmployees" optionLabel="fullName" optionValue="id" placeholder="Çalışan Seçiniz" appendTo="body" styleClass="w-full"
+                    [ngClass]="{'ng-invalid ng-dirty': employeeForm.controls['employeeId'].invalid && employeeForm.controls['employeeId'].touched}">
+                </p-dropdown>
+            </div>
+        </div>
+    </form>
+    <ng-template pTemplate="footer">
+        <p-button label="İptal" icon="pi pi-times" severity="secondary" [text]="true" (onClick)="showEmployeeDialog = false" />
+        <p-button label="Kaydet" icon="pi pi-check" (onClick)="saveEmployee()" />
+    </ng-template>
+</p-dialog>

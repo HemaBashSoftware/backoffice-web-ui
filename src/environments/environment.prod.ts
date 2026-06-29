@@ -3,6 +3,7 @@ export const environment = {
     identityApiUrl: 'https://identity.hemabash.com/api/v1',
     bpmApiUrl:      'https://bpm.hemabash.com/api/v1',
     yscApiUrl:      'https://ysc.hemabash.com/api/v1',
+    sanayiApiUrl: 'https://sanayi.hemabash.com/api/v1',
     baseUrl:        'https://backoffice.hemabash.com',
     defaultLang:    'tr-TR',
 };

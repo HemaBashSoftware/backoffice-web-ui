@@ -58,3 +58,19 @@ export interface ServiceRequest {
     updatedAt?: Date;
     isDeleted: boolean;
 }
+
+export interface Tenant {
+    id: number;
+    companyName: string;
+    phoneNumber: string;
+    email: string;
+    taxNo: string;
+    createdUserId?: number;
+    lastUpdatedUserId?: number;
+    deletedUserId?: number;
+    createdAt?: Date;
+    updatedAt?: Date;
+    deletedAt?: Date;
+    isDeleted?: boolean;
+    recordStatus?: number;
+}

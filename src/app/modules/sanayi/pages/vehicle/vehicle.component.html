@@ -1,0 +1,84 @@
+<app-crud-page 
+    [title]="'Araç Yönetimi'"
+    [data]="list"
+    [columns]="cols"
+    [loading]="loading"
+    [isEdit]="isEdit"
+    [globalFilterFields]="['plate', 'brand', 'model', 'customerFullName']"
+    [(showDialog)]="showDialog"
+    [formInvalid]="form.invalid"
+    [formTemplate]="formTpl"
+    (onNew)="openNew()"
+    (onEdit)="openEdit($event)"
+    (onDelete)="confirmDelete($event)"
+    (onSubmit)="onSubmit()"
+    (onDetail)="goToDetail($event)">
+    
+    <ng-template #formTpl>
+        <form [formGroup]="form" style="padding-top:1rem;">
+            <div class="form-grid">
+                <div class="field" style="grid-column: span 2;">
+                    <label>Müşteri <span class="req">*</span></label>
+                    <p-dropdown formControlName="customerId" [options]="customers" optionLabel="companyName" optionValue="id" placeholder="Müşteri Seçiniz" appendTo="body" styleClass="w-full"
+                        [ngClass]="{'ng-invalid ng-dirty': form.controls['customerId'].invalid && form.controls['customerId'].touched}">
+                    </p-dropdown>
+                    @if(form.controls['customerId'].invalid && form.controls['customerId'].touched) {
+                    <small class="err">Zorunlu alan.</small>
+                    }
+                </div>
+                
+                <div class="field">
+                    <label>Plaka <span class="req">*</span></label>
+                    <input pInputText formControlName="plate" class="w-full" placeholder="Örn: 34 ABC 123"
+                        [class.ng-invalid]="form.controls['plate'].invalid && form.controls['plate'].touched" />
+                    @if(form.controls['plate'].invalid && form.controls['plate'].touched) {
+                    <small class="err">Zorunlu alan.</small>
+                    }
+                </div>
+                <div class="field">
+                    <label>Marka <span class="req">*</span></label>
+                    <input pInputText formControlName="brand" class="w-full" placeholder="Örn: Renault"
+                        [class.ng-invalid]="form.controls['brand'].invalid && form.controls['brand'].touched" />
+                    @if(form.controls['brand'].invalid && form.controls['brand'].touched) {
+                    <small class="err">Zorunlu alan.</small>
+                    }
+                </div>
+                <div class="field">
+                    <label>Model <span class="req">*</span></label>
+                    <input pInputText formControlName="model" class="w-full" placeholder="Örn: Megane"
+                        [class.ng-invalid]="form.controls['model'].invalid && form.controls['model'].touched" />
+                    @if(form.controls['model'].invalid && form.controls['model'].touched) {
+                    <small class="err">Zorunlu alan.</small>
+                    }
+                </div>
+                <div class="field">
+                    <label>Yıl <span class="req">*</span></label>
+                    <p-inputNumber formControlName="year" [useGrouping]="false" class="w-full"
+                        [ngClass]="{'ng-invalid ng-dirty': form.controls['year'].invalid && form.controls['year'].touched}"></p-inputNumber>
+                    @if(form.controls['year'].invalid && form.controls['year'].touched) {
+                    <small class="err">Geçerli bir yıl giriniz.</small>
+                    }
+                </div>
+                <div class="field">
+                    <label>Vites <span class="req">*</span></label>
+                    <p-dropdown formControlName="gear" [options]="gearOptions" placeholder="Vites Seç" appendTo="body" styleClass="w-full"
+                        [ngClass]="{'ng-invalid ng-dirty': form.controls['gear'].invalid && form.controls['gear'].touched}"></p-dropdown>
+                </div>
+                <div class="field">
+                    <label>Yakıt <span class="req">*</span></label>
+                    <p-dropdown formControlName="fuelType" [options]="fuelOptions" placeholder="Yakıt Seç" appendTo="body" styleClass="w-full"
+                        [ngClass]="{'ng-invalid ng-dirty': form.controls['fuelType'].invalid && form.controls['fuelType'].touched}"></p-dropdown>
+                </div>
+                <div class="field">
+                    <label>Motor Hacmi</label>
+                    <input pInputText formControlName="engineCapacity" class="w-full" placeholder="Örn: 1.5 dCi" />
+                </div>
+                <div class="field">
+                    <label>Kilometre</label>
+                    <p-inputNumber formControlName="kilometer" class="w-full"></p-inputNumber>
+                </div>
+            </div>
+        </form>
+    </ng-template>
+
+</app-crud-page>

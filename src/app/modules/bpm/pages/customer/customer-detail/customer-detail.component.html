@@ -1,0 +1,143 @@
+<app-crud-detail-page 
+    [title]="item?.companyName || ''"
+    [status]="item?.recordStatus || 1"
+    [isDeleted]="item?.isDeleted || false"
+    [loading]="loading"
+    [(showStatusDialog)]="showStatusDialog"
+    [(selectedStatus)]="selectedStatus"
+    [statusOptions]="statusOptions"
+    [(showEditDialog)]="showEditDialog"
+    [formInvalid]="editForm.invalid"
+    (onBack)="goBack('/bpm/customer')"
+    (onSaveStatus)="saveStatus($event)"
+    (onSaveEdit)="saveEdit()"
+    [quickInfoTemplate]="quickInfo"
+    [contentTemplate]="contentTpl"
+    [editFormTemplate]="editFormTpl">
+
+    <!-- Quick Info Cards -->
+    <ng-template #quickInfo>
+        <app-info-card label="Vergi No" [value]="item?.taxNo || '-'"></app-info-card>
+        <app-info-card label="Vergi Dairesi" [value]="item?.taxOffice || '-'"></app-info-card>
+        <app-info-card label="Telefon" [value]="item?.phoneNumber || '-'"></app-info-card>
+        <app-info-card label="E-Posta" [value]="item?.email || '-'"></app-info-card>
+        <app-info-card label="Oluşturulma Tarihi">
+            {{ item?.createdAt | date:'dd.MM.yyyy HH:mm' }}
+        </app-info-card>
+    </ng-template>
+
+    <!-- Main Content (Cards below quick info) -->
+    <ng-template #contentTpl>
+        <div style="display:grid; grid-template-columns:1fr; gap:1.75rem;">
+            <!-- Adres Kartı -->
+            <div style="background:var(--surface-card); border:1px solid var(--surface-border); border-radius:12px; padding:1.5rem;">
+                <h3 style="margin:0 0 1rem; font-size:1.1rem; font-weight:600; border-bottom:1px solid var(--surface-border); padding-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem;">
+                    <i class="pi pi-map-marker"></i> Adres Bilgisi
+                </h3>
+                <p style="font-size:1.05rem; color:var(--text-color); margin:0;">
+                    {{ item?.address || 'Adres bilgisi girilmemiş.' }}
+                </p>
+            </div>
+
+            <!-- Notlar Kartı -->
+            <div style="background:var(--surface-card); border:1px solid var(--surface-border); border-radius:12px; padding:1.5rem;">
+                <h3 style="margin:0 0 1rem; font-size:1.1rem; font-weight:600; border-bottom:1px solid var(--surface-border); padding-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem;">
+                    <i class="pi pi-info-circle"></i> Notlar
+                </h3>
+                <div style="background:var(--surface-ground); padding:1rem; border-radius:8px; border-left:4px solid var(--p-primary-color); font-style:italic; color:var(--text-color); line-height:1.5;">
+                    {{ item?.notes || 'Firma hakkında herhangi bir not bulunmuyor.' }}
+                </div>
+            </div>
+            
+            <!-- Sistem Bilgileri Kartı -->
+            <div style="background:var(--surface-card); border:1px solid var(--surface-border); border-radius:12px; padding:1.5rem;">
+                <h3 style="margin:0 0 1rem; font-size:1.1rem; font-weight:600; border-bottom:1px solid var(--surface-border); padding-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem;">
+                    <i class="pi pi-history"></i> İşlem Geçmişi
+                </h3>
+                <div style="display:flex; flex-wrap:wrap; gap:2rem;">
+                    <div>
+                        <span style="display:block; font-size:0.85rem; color:var(--text-color-secondary); font-weight:600; margin-bottom:0.25rem;">Oluşturulma Tarihi</span>
+                        <span>{{ item?.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
+                    </div>
+                    <div>
+                        <span style="display:block; font-size:0.85rem; color:var(--text-color-secondary); font-weight:600; margin-bottom:0.25rem;">Son Güncelleme</span>
+                        <span>{{ item?.updatedAt ? (item?.updatedAt | date:'dd.MM.yyyy HH:mm') : '-' }}</span>
+                    </div>
+                    @if(item?.isDeleted && item?.deletedAt) {
+                    <div>
+                        <span style="display:block; font-size:0.85rem; color:var(--text-color-secondary); font-weight:600; margin-bottom:0.25rem;">Pasife Alınma Tarihi</span>
+                        <span style="color:var(--p-red-500); font-weight:600;">{{ item?.deletedAt | date:'dd.MM.yyyy HH:mm' }}</span>
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </ng-template>
+
+    <!-- Edit Form Template -->
+    <ng-template #editFormTpl>
+        <form [formGroup]="editForm" style="padding-top:1rem;">
+            <!-- Firma Bilgileri -->
+            <div class="section-title">Firma Bilgileri</div>
+            <div class="form-grid">
+                <div class="field" style="grid-column: span 2;">
+                    <label>Firma Adı <span class="req">*</span></label>
+                    <input pInputText formControlName="companyName" class="w-full"
+                        [class.ng-invalid]="editForm.controls['companyName'].invalid && editForm.controls['companyName'].touched" />
+                    @if(editForm.controls['companyName'].invalid && editForm.controls['companyName'].touched) {
+                    <small class="err">Zorunlu alan.</small>
+                    }
+                </div>
+                <div class="field">
+                    <label>Vergi No <span class="req">*</span></label>
+                    <input pInputText formControlName="taxNo" class="w-full"
+                        [class.ng-invalid]="editForm.controls['taxNo'].invalid && editForm.controls['taxNo'].touched" />
+                    @if(editForm.controls['taxNo'].invalid && editForm.controls['taxNo'].touched) {
+                    <small class="err">Zorunlu alan.</small>
+                    }
+                </div>
+                <div class="field">
+                    <label>Vergi Dairesi</label>
+                    <input pInputText formControlName="taxOffice" class="w-full" />
+                </div>
+            </div>
+
+            <!-- İletişim Bilgileri -->
+            <div class="section-title" style="margin-top:1.25rem;">İletişim Bilgileri</div>
+            <div class="form-grid">
+                <div class="field">
+                    <label>Telefon <span class="req">*</span></label>
+                    <input pInputText formControlName="phoneNumber" class="w-full" placeholder="+90 5XX XXX XX XX"
+                        [class.ng-invalid]="editForm.controls['phoneNumber'].invalid && editForm.controls['phoneNumber'].touched" />
+                    @if(editForm.controls['phoneNumber'].invalid && editForm.controls['phoneNumber'].touched) {
+                    <small class="err">Zorunlu alan.</small>
+                    }
+                </div>
+                <div class="field">
+                    <label>E-Posta <span class="req">*</span></label>
+                    <input pInputText formControlName="email" class="w-full" type="email"
+                        [class.ng-invalid]="editForm.controls['email'].invalid && editForm.controls['email'].touched" />
+                    @if(editForm.controls['email'].invalid && editForm.controls['email'].touched) {
+                        @if(editForm.controls['email'].errors?.['required']) {
+                        <small class="err">Zorunlu alan.</small>
+                        } @else if(editForm.controls['email'].errors?.['email']) {
+                        <small class="err">Geçerli bir e-posta giriniz.</small>
+                        }
+                    }
+                </div>
+                <div class="field" style="grid-column: span 2;">
+                    <label>Adres</label>
+                    <textarea pTextarea formControlName="address" rows="2" class="w-full"></textarea>
+                </div>
+            </div>
+
+            <!-- Notlar -->
+            <div class="section-title" style="margin-top:1.25rem;">Notlar</div>
+            <div class="field">
+                <textarea pTextarea formControlName="notes" rows="2" class="w-full"
+                    placeholder="Firma hakkında notlar..."></textarea>
+            </div>
+        </form>
+    </ng-template>
+
+</app-crud-detail-page>

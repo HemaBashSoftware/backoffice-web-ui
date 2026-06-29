@@ -50,6 +50,22 @@ export class AppMenu {
             ];
         }
 
+        if (mod === 'sanayi') {
+            return [
+                {
+                    label: 'SANAYİ',
+                    items: [
+                        { label: 'Dashboard',  icon: 'pi pi-fw pi-home',  routerLink: ['/sanayi'] },
+                        { label: 'Müşteriler', icon: 'pi pi-fw pi-users', routerLink: ['/sanayi/customer'] },
+                        { label: 'Araçlar',    icon: 'pi pi-fw pi-car', routerLink: ['/sanayi/vehicle'] },
+                        { label: 'Çalışanlar', icon: 'pi pi-fw pi-id-card', routerLink: ['/sanayi/employee'] },
+                        { label: 'İş Takibi',  icon: 'pi pi-fw pi-briefcase', routerLink: ['/sanayi/job-tracking'] },
+                    ]
+                },
+                systemItem,
+            ];
+        }
+
         return [
             {
                 label: mod ? mod.toUpperCase() : 'Menü',

@@ -1,0 +1,75 @@
+<app-crud-page 
+    [title]="'Çalışan Yönetimi'"
+    [data]="list"
+    [columns]="cols"
+    [loading]="loading"
+    [isEdit]="isEdit"
+    [globalFilterFields]="['fullName', 'phone', 'emailAddress', 'role']"
+    [(showDialog)]="showDialog"
+    [formInvalid]="form.invalid"
+    [formTemplate]="formTpl"
+    [customColumnsTemplate]="customColsTpl"
+    (onNew)="openNew()"
+    (onEdit)="openEdit($event)"
+    (onDelete)="confirmDelete($event)"
+    (onSubmit)="onSubmit()">
+    
+    <ng-template #customColsTpl let-col let-row="row">
+        @if(col.field === 'status') {
+            <p-tag [severity]="row.status === 'Aktif' ? 'success' : (row.status === 'İzinli' ? 'warn' : 'danger')" [value]="row.status"></p-tag>
+        }
+        @else if (col.field === 'fullName') {
+            {{ row.fullName }}
+            @if(row.activeTasks && row.activeTasks.length > 0) {
+                <p-tag severity="info" [value]="row.activeTasks.length + ' Aktif Görev'" styleClass="ml-2"></p-tag>
+            }
+        }
+        @else {
+            {{ row[col.field] }}
+        }
+    </ng-template>
+
+    <ng-template #formTpl>
+        <form [formGroup]="form" style="padding-top:1rem;">
+            <div class="form-grid">
+                <div class="field" style="grid-column: span 2;">
+                    <label>Ad Soyad <span class="req">*</span></label>
+                    <input pInputText formControlName="fullName" class="w-full"
+                        [class.ng-invalid]="form.controls['fullName'].invalid && form.controls['fullName'].touched" />
+                    @if(form.controls['fullName'].invalid && form.controls['fullName'].touched) {
+                    <small class="err">Zorunlu alan.</small>
+                    }
+                </div>
+                
+                <div class="field">
+                    <label>Telefon <span class="req">*</span></label>
+                    <input pInputText formControlName="phone" class="w-full" placeholder="+90 5XX XXX XX XX"
+                        [class.ng-invalid]="form.controls['phone'].invalid && form.controls['phone'].touched" />
+                    @if(form.controls['phone'].invalid && form.controls['phone'].touched) {
+                    <small class="err">Zorunlu alan.</small>
+                    }
+                </div>
+                
+                <div class="field">
+                    <label>E-Posta <span class="req">*</span></label>
+                    <input pInputText formControlName="emailAddress" type="email" class="w-full"
+                        [class.ng-invalid]="form.controls['emailAddress'].invalid && form.controls['emailAddress'].touched" />
+                    @if(form.controls['emailAddress'].invalid && form.controls['emailAddress'].touched) {
+                    <small class="err">Geçerli bir e-posta giriniz.</small>
+                    }
+                </div>
+                
+                <div class="field">
+                    <label>Görev <span class="req">*</span></label>
+                    <p-dropdown formControlName="role" [options]="roleOptions" appendTo="body" styleClass="w-full"></p-dropdown>
+                </div>
+                
+                <div class="field">
+                    <label>Durum <span class="req">*</span></label>
+                    <p-dropdown formControlName="status" [options]="statusOptions" appendTo="body" styleClass="w-full"></p-dropdown>
+                </div>
+            </div>
+        </form>
+    </ng-template>
+
+</app-crud-page>

@@ -1,0 +1,82 @@
+<app-crud-page 
+    title="Müşteri"
+    [data]="list"
+    [columns]="cols"
+    [loading]="loading"
+    [isEdit]="isEdit"
+    [globalFilterFields]="['companyName','taxNo','phoneNumber','email']"
+    [formInvalid]="form.invalid"
+    [(showDialog)]="showDialog"
+    (onNew)="openNew()"
+    (onEdit)="openEdit($event)"
+    (onDelete)="confirmDelete($event)"
+    (onDetail)="goToDetail($event)"
+    (onSubmit)="onSubmit()"
+    (onHideDialog)="form.reset()"
+    [formTemplate]="formBody">
+    
+    <ng-template #formBody>
+        <form [formGroup]="form">
+            <!-- Firma Bilgileri -->
+            <div class="section-title">Firma Bilgileri</div>
+            <div class="form-grid">
+                <div class="field" style="grid-column: span 2;">
+                    <label>Firma Adı <span class="req">*</span></label>
+                    <input pInputText formControlName="companyName" class="w-full"
+                        [class.ng-invalid]="f['companyName'].invalid && f['companyName'].touched" />
+                    @if(f['companyName'].invalid && f['companyName'].touched) {
+                        <small class="err">Zorunlu alan.</small>
+                    }
+                </div>
+                <div class="field">
+                    <label>Vergi No <span class="req">*</span></label>
+                    <input pInputText formControlName="taxNo" class="w-full"
+                        [class.ng-invalid]="f['taxNo'].invalid && f['taxNo'].touched" />
+                    @if(f['taxNo'].invalid && f['taxNo'].touched) {
+                        <small class="err">Zorunlu alan.</small>
+                    }
+                </div>
+                <div class="field">
+                    <label>Vergi Dairesi</label>
+                    <input pInputText formControlName="taxOffice" class="w-full" />
+                </div>
+            </div>
+
+            <!-- İletişim Bilgileri -->
+            <div class="section-title" style="margin-top:1.25rem;">İletişim Bilgileri</div>
+            <div class="form-grid">
+                <div class="field">
+                    <label>Telefon <span class="req">*</span></label>
+                    <input pInputText formControlName="phoneNumber" class="w-full" placeholder="+90 5XX XXX XX XX"
+                        [class.ng-invalid]="f['phoneNumber'].invalid && f['phoneNumber'].touched" />
+                    @if(f['phoneNumber'].invalid && f['phoneNumber'].touched) {
+                        <small class="err">Zorunlu alan.</small>
+                    }
+                </div>
+                <div class="field">
+                    <label>E-Posta <span class="req">*</span></label>
+                    <input pInputText formControlName="email" class="w-full" type="email"
+                        [class.ng-invalid]="f['email'].invalid && f['email'].touched" />
+                    @if(f['email'].invalid && f['email'].touched) {
+                        @if(f['email'].errors?.['required']) {
+                            <small class="err">Zorunlu alan.</small>
+                        } @else if(f['email'].errors?.['email']) {
+                            <small class="err">Geçerli bir e-posta giriniz.</small>
+                        }
+                    }
+                </div>
+                <div class="field" style="grid-column: span 2;">
+                    <label>Adres</label>
+                    <textarea pTextarea formControlName="address" rows="2" class="w-full"></textarea>
+                </div>
+            </div>
+
+            <!-- Notlar -->
+            <div class="section-title" style="margin-top:1.25rem;">Notlar</div>
+            <div class="field">
+                <textarea pTextarea formControlName="notes" rows="2" class="w-full"
+                    placeholder="Firma hakkında notlar..."></textarea>
+            </div>
+        </form>
+    </ng-template>
+</app-crud-page>

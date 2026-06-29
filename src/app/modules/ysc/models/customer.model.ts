@@ -16,7 +16,7 @@ export const CustomerRecordStatusLabel: Record<CustomerRecordStatus, string> = {
 
 export const CustomerRecordStatusSeverity: Record<CustomerRecordStatus, string> = {
     [CustomerRecordStatus.ACTIVE]:           'success',
-    [CustomerRecordStatus.PASIVE]:           'secondary',
+    [CustomerRecordStatus.PASIVE]:           'danger',
     [CustomerRecordStatus.UNPAID]:           'danger',
     [CustomerRecordStatus.RENEWAL_PENDING]:  'warn',
     [CustomerRecordStatus.SUSPENDED]:        'contrast',

@@ -1,0 +1,59 @@
+<app-crud-page 
+    title="Müşteri"
+    dialogWidth="500px"
+    [data]="list"
+    [columns]="cols"
+    [loading]="loading"
+    [isEdit]="isEdit"
+    [globalFilterFields]="['companyName','taxNo','phoneNumber','email']"
+    [formInvalid]="form.invalid"
+    [(showDialog)]="showDialog"
+    (onNew)="openNew()"
+    (onEdit)="openEdit($event)"
+    (onDelete)="confirmDelete($event)"
+    (onDetail)="goToDetail($event)"
+    (onSubmit)="onSubmit()"
+    (onHideDialog)="form.reset()"
+    [formTemplate]="formBody">
+    
+    <ng-template #formBody>
+        <form [formGroup]="form" class="form-grid-single">
+            <div class="field">
+                <label>Firma Adı <span class="req">*</span></label>
+                <input pInputText formControlName="companyName" class="w-full"
+                    [class.ng-invalid]="f['companyName'].invalid && f['companyName'].touched" />
+                @if(f['companyName'].invalid && f['companyName'].touched) {
+                    <small class="err">Zorunlu alan.</small>
+                }
+            </div>
+            <div class="field">
+                <label>Vergi No / TC Kimlik No <span class="req">*</span></label>
+                <input pInputText formControlName="taxNo" class="w-full"
+                    [class.ng-invalid]="f['taxNo'].invalid && f['taxNo'].touched" />
+                @if(f['taxNo'].invalid && f['taxNo'].touched) {
+                    <small class="err">Zorunlu alan.</small>
+                }
+            </div>
+            <div class="field">
+                <label>Telefon <span class="req">*</span></label>
+                <input pInputText formControlName="phoneNumber" class="w-full"
+                    [class.ng-invalid]="f['phoneNumber'].invalid && f['phoneNumber'].touched" />
+                @if(f['phoneNumber'].invalid && f['phoneNumber'].touched) {
+                    <small class="err">Zorunlu alan.</small>
+                }
+            </div>
+            <div class="field">
+                <label>E-Posta <span class="req">*</span></label>
+                <input pInputText formControlName="email" class="w-full"
+                    [class.ng-invalid]="f['email'].invalid && f['email'].touched" />
+                @if(f['email'].invalid && f['email'].touched) {
+                    @if(f['email'].errors?.['required']) {
+                        <small class="err">Zorunlu alan.</small>
+                    } @else if(f['email'].errors?.['email']) {
+                        <small class="err">Geçerli bir e-posta giriniz.</small>
+                    }
+                }
+            </div>
+        </form>
+    </ng-template>
+</app-crud-page>

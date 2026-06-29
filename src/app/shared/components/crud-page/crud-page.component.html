@@ -1,0 +1,93 @@
+
+
+<p-toolbar styleClass="mb-4">
+    <ng-template #start>
+        <p-button [label]="'Yeni ' + title" icon="pi pi-plus" severity="success" (onClick)="onNew.emit()" />
+    </ng-template>
+    <ng-template #end>
+        <p-iconfield>
+            <p-inputicon styleClass="pi pi-search" />
+            <input pInputText placeholder="Ara..." (input)="onGlobalFilter(dt, $event)" style="width:220px;" />
+        </p-iconfield>
+    </ng-template>
+</p-toolbar>
+
+<div class="card">
+    <p-table #dt [value]="data" [loading]="loading" [paginator]="true" [rows]="15" [rowsPerPageOptions]="[10,15,25,50]"
+        [globalFilterFields]="globalFilterFields"
+        currentPageReportTemplate="{totalRecords} kayıttan {first} - {last} arası" [showCurrentPageReport]="true"
+        [rowHover]="true">
+
+        <ng-template #caption>
+            <div class="flex items-center justify-between">
+                <h5 class="m-0">{{ title }} Listesi</h5>
+                <span style="color:var(--text-color-secondary); font-size:0.85rem;">{{ data.length }} kayıt</span>
+            </div>
+        </ng-template>
+
+        <ng-template #header>
+            <tr>
+                @for (col of columns; track col.field) {
+                    <th [pSortableColumn]="col.field">{{ col.header }} <p-sortIcon [field]="col.field" /></th>
+                }
+                <th style="min-width: 10rem"></th>
+            </tr>
+        </ng-template>
+
+        <ng-template #body let-row>
+            <tr [ngStyle]="{'opacity': isInactiveRow(row) ? '0.6' : '1'}">
+                @if (customColumnsTemplate) {
+                    <ng-container *ngTemplateOutlet="customColumnsTemplate; context: { $implicit: row }"></ng-container>
+                } @else {
+                    @for (col of columns; track col.field; let first = $first) {
+                        <td>
+                            @if (first) {
+                                <div class="flex items-center gap-2">
+                                    {{ row[col.field] }}
+                                    <p-tag [severity]="getSeverity(row.recordStatus, row.isDeleted)" 
+                                           [value]="getStatusLabel(row.recordStatus, row.isDeleted)" 
+                                           [rounded]="true" />
+                                </div>
+                            } @else {
+                                {{ row[col.field] }}
+                            }
+                        </td>
+                    }
+                }
+                <td style="white-space: nowrap; text-align: right;">
+                    @if (onDetail.observed) {
+                        <p-button icon="pi pi-eye" severity="info" class="mr-2" [rounded]="true" [outlined]="true"
+                            pTooltip="Detay" (onClick)="onDetail.emit(row)" />
+                    }
+                    <p-button icon="pi pi-pencil" severity="success" class="mr-2" [rounded]="true" [outlined]="true"
+                        pTooltip="Düzenle" (onClick)="onEdit.emit(row)" />
+                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" pTooltip="Sil"
+                        (onClick)="onDelete.emit(row)" [disabled]="isInactiveRow(row)" />
+                </td>
+            </tr>
+        </ng-template>
+
+        <ng-template #emptymessage>
+            <tr>
+                <td [attr.colspan]="columns.length + 1" class="text-center py-8">
+                    <i class="pi pi-inbox" style="font-size:2rem; color:var(--p-text-muted-color)"></i>
+                    <p style="color:var(--p-text-muted-color); margin-top:.5rem">Kayıt bulunamadı.</p>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
+
+<!-- Form Dialog -->
+<p-dialog [visible]="showDialog" (visibleChange)="showDialogChange.emit($event)" [modal]="true" [style]="{width: dialogWidth}" [draggable]="false"
+    [header]="isEdit ? title + ' Düzenle' : 'Yeni ' + title" (onHide)="onHideDialog.emit()">
+    
+    <ng-template pTemplate="content">
+        <ng-container *ngTemplateOutlet="formTemplate"></ng-container>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Vazgeç" icon="pi pi-times" [text]="true" (onClick)="closeDialog()" />
+        <p-button [label]="isEdit ? 'Güncelle' : 'Kaydet'" icon="pi pi-check" (onClick)="onSubmit.emit()" [disabled]="formInvalid" />
+    </ng-template>
+</p-dialog>

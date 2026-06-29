@@ -1,45 +1,51 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
-import { TagModule } from 'primeng/tag';
 import { TabsModule } from 'primeng/tabs';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { ToastModule } from 'primeng/toast';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { MessageService, ConfirmationService, SelectItem } from 'primeng/api';
+import { DatePickerModule } from 'primeng/datepicker';
 
 import { YscCustomerService } from '../../../services/customer.service';
 import { CustomerAddressService } from '../../../services/customer-address.service';
 import { CustomerContactService } from '../../../services/customer-contact.service';
 import { AddressLookupService } from '../../../services/address-lookup.service';
-import {
-    Customer, CustomerAddressDetail, CustomerContactDetail,
-    CustomerRecordStatus, CustomerRecordStatusLabel, CustomerRecordStatusSeverity
-} from '../../../models/customer.model';
+import { Customer, CustomerAddressDetail, CustomerContactDetail, CustomerRecordStatus, CustomerRecordStatusLabel } from '../../../models/customer.model';
 import { Province, District, Neighbourhood } from '../../../models/address-lookup.model';
+
+import { BaseCrudDetailComponent } from '../../../../../shared/classes/base-crud-detail.component';
+import { ICrudService } from '../../../../../shared/models/crud-service.interface';
+import { CrudDetailPageComponent } from '../../../../../shared/components/crud-detail-page/crud-detail-page.component';
+import { InfoCardComponent } from '../../../../../shared/components/info-card/info-card.component';
 
 @Component({
     selector: 'app-customer-detail',
     standalone: true,
-    providers: [MessageService, ConfirmationService],
     imports: [
         CommonModule, FormsModule, ReactiveFormsModule,
-        TableModule, ButtonModule, TagModule, TabsModule,
-        DialogModule, InputTextModule, SelectModule, TextareaModule,
-        InputNumberModule, ToastModule, ConfirmDialogModule,
+        TableModule, ButtonModule, TabsModule, DialogModule, 
+        InputTextModule, SelectModule, TextareaModule, InputNumberModule, DatePickerModule,
+        CrudDetailPageComponent, InfoCardComponent
     ],
     templateUrl: './customer-detail.component.html',
+    styles: [`
+        .dfield { display: flex; flex-direction: column; gap: 0.3rem; }
+        .dfield label { font-size: 0.8rem; font-weight: 600; color: var(--text-color-secondary); }
+    `]
 })
-export class CustomerDetailComponent implements OnInit {
+export class CustomerDetailComponent extends BaseCrudDetailComponent<Customer> {
+    
+    statusOptions = Object.values(CustomerRecordStatus)
+        .filter(v => typeof v === 'number')
+        .map(v => ({ label: CustomerRecordStatusLabel[v as CustomerRecordStatus], value: v as number }));
+
     addrCols = [
         { field: 'label',       header: 'Etiket' },
         { field: 'fullAddress', header: 'Tam Adres' },
@@ -53,18 +59,8 @@ export class CustomerDetailComponent implements OnInit {
         { field: 'notes', header: 'Notlar' },
     ];
 
-    customer: Customer | null = null;
     addresses: CustomerAddressDetail[] = [];
     contacts: CustomerContactDetail[] = [];
-    loading = false;
-
-    // Status
-    statusOptions: SelectItem[] = [];
-    showStatusDialog = false;
-    selectedStatus: CustomerRecordStatus = CustomerRecordStatus.ACTIVE;
-    StatusLabel = CustomerRecordStatusLabel;
-    StatusSeverity = CustomerRecordStatusSeverity;
-    StatusEnum = CustomerRecordStatus;
 
     // Address dialog
     showAddrDialog = false;
@@ -80,28 +76,65 @@ export class CustomerDetailComponent implements OnInit {
     contactForm!: FormGroup;
 
     constructor(
-        private route: ActivatedRoute,
-        public router: Router,
         private fb: FormBuilder,
         private customerService: YscCustomerService,
         private addressService: CustomerAddressService,
         private contactService: CustomerContactService,
         private lookupService: AddressLookupService,
-        private messageService: MessageService,
-        private confirmationService: ConfirmationService,
-    ) {}
-
-    ngOnInit() {
-        const id = Number(this.route.snapshot.paramMap.get('id'));
-        this.buildForms();
-        this.loadAll(id);
-        this.lookupService.getProvinces().subscribe(p => this.provinces = p);
-        this.statusOptions = Object.values(CustomerRecordStatus)
-            .filter(v => typeof v === 'number')
-            .map(v => ({ label: CustomerRecordStatusLabel[v as CustomerRecordStatus], value: v }));
+    ) {
+        super();
     }
 
-    loadAll(id: number) {
+    protected getService(): ICrudService<Customer> {
+        return this.customerService;
+    }
+
+    protected getEntityName(): string {
+        return 'Müşteri';
+    }
+
+    protected buildForm() {
+        this.editForm = this.fb.group({
+            id: [0],
+            name: ['', Validators.required],
+            taxNumber: [null, Validators.required],
+            taxOffice: [''],
+            faxNumber: [''],
+            officialFirmName: [''],
+            firmNo: [''],
+            firmOfficial: [''],
+            ceCertificateNo: [''],
+            tsNo: [''],
+            tseNo: [''],
+            hybNo: [''],
+            dybNo: [''],
+            tseCertificateExpireDate: [null],
+            hybCertificateExpireDate: [null],
+            recordStatus: [1],
+        });
+
+        this.addrForm = this.fb.group({
+            id: [0], customerId: [0],
+            label: [''], provinceId: [null],
+            districtId: [{ value: null, disabled: true }],
+            neighbourhoodId: [{ value: null, disabled: true }],
+            street: [''], buildingNo: [''], doorNo: [''],
+            postalCode: [null], fullAddress: [''],
+        });
+
+        this.contactForm = this.fb.group({
+            id: [0], customerId: [0],
+            role: [''], name: [''], surname: [''],
+            email: [''], phone: [''], notes: [''],
+        });
+    }
+
+    override ngOnInit() {
+        super.ngOnInit();
+        this.lookupService.getProvinces().subscribe(p => this.provinces = p);
+    }
+
+    protected override loadDetailLogic(id: number) {
         this.loading = true;
         forkJoin({
             customer: this.customerService.getById(id),
@@ -109,8 +142,8 @@ export class CustomerDetailComponent implements OnInit {
             contacts: this.contactService.getByCustomer(id),
         }).subscribe({
             next: ({ customer, addresses, contacts }) => {
-                this.customer = customer;
-                this.selectedStatus = customer.recordStatus;
+                this.item = customer;
+                this.onAfterLoadDetail(customer);
                 this.addresses = addresses;
                 this.contacts = contacts;
                 this.loading = false;
@@ -122,45 +155,11 @@ export class CustomerDetailComponent implements OnInit {
         });
     }
 
-    // ── Status ──────────────────────────────────────────────────────────────
-
-    openStatusDialog() {
-        this.selectedStatus = this.customer!.recordStatus;
-        this.showStatusDialog = true;
-    }
-
-    saveStatus() {
-        this.customerService.updateStatus(this.customer!, this.selectedStatus).subscribe({
-            next: () => {
-                this.customer!.recordStatus = this.selectedStatus;
-                this.messageService.add({ severity: 'success', summary: 'Güncellendi', detail: 'Müşteri durumu güncellendi.' });
-                this.showStatusDialog = false;
-            },
-            error: () => this.messageService.add({ severity: 'error', summary: 'Hata', detail: 'Durum güncellenemedi.' })
-        });
-    }
-
     // ── Address ──────────────────────────────────────────────────────────────
-
-    buildForms() {
-        this.addrForm = this.fb.group({
-            id: [0], customerId: [0],
-            label: [''], provinceId: [null],
-            districtId: [{ value: null, disabled: true }],
-            neighbourhoodId: [{ value: null, disabled: true }],
-            street: [''], buildingNo: [''], doorNo: [''],
-            postalCode: [null], fullAddress: [''],
-        });
-        this.contactForm = this.fb.group({
-            id: [0], customerId: [0],
-            role: [''], name: [''], surname: [''],
-            email: [''], phone: [''], notes: [''],
-        });
-    }
 
     openNewAddr() {
         this.isEditAddr = false;
-        this.addrForm.reset({ id: 0, customerId: this.customer!.id });
+        this.addrForm.reset({ id: 0, customerId: this.item!.id });
         this.districts = []; this.neighbourhoods = [];
         this.addrForm.get('districtId')!.disable();
         this.addrForm.get('neighbourhoodId')!.disable();
@@ -215,7 +214,7 @@ export class CustomerDetailComponent implements OnInit {
             next: () => {
                 this.messageService.add({ severity: 'success', summary: 'Kaydedildi' });
                 this.showAddrDialog = false;
-                this.addressService.getByCustomer(this.customer!.id).subscribe(d => this.addresses = d);
+                this.addressService.getByCustomer(this.item!.id).subscribe(d => this.addresses = d);
             },
             error: () => this.messageService.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız.' })
         });
@@ -241,7 +240,7 @@ export class CustomerDetailComponent implements OnInit {
 
     openNewContact() {
         this.isEditContact = false;
-        this.contactForm.reset({ id: 0, customerId: this.customer!.id });
+        this.contactForm.reset({ id: 0, customerId: this.item!.id });
         this.showContactDialog = true;
     }
 
@@ -258,7 +257,7 @@ export class CustomerDetailComponent implements OnInit {
             next: () => {
                 this.messageService.add({ severity: 'success', summary: 'Kaydedildi' });
                 this.showContactDialog = false;
-                this.contactService.getByCustomer(this.customer!.id).subscribe(d => this.contacts = d);
+                this.contactService.getByCustomer(this.item!.id).subscribe(d => this.contacts = d);
             },
             error: () => this.messageService.add({ severity: 'error', summary: 'Hata', detail: 'İşlem başarısız.' })
         });
@@ -279,19 +278,4 @@ export class CustomerDetailComponent implements OnInit {
             })
         });
     }
-
-    // ── Helpers ──────────────────────────────────────────────────────────────
-
-    getSeverity(status: CustomerRecordStatus): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
-        const map: Record<number, 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast'> = {
-            1: 'success', 2: 'secondary', 3: 'danger', 4: 'warn', 5: 'contrast'
-        };
-        return map[status] ?? 'secondary';
-    }
-
-    getStatusLabel(status: CustomerRecordStatus): string {
-        return CustomerRecordStatusLabel[status] ?? '-';
-    }
-
-    goBack() { this.router.navigate(['/ysc/customer']); }
 }

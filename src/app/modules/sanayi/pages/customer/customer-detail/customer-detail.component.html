@@ -1,0 +1,61 @@
+<app-crud-detail-page 
+    [title]="item?.companyName || ''"
+    [status]="item?.recordStatus || 1"
+    [isDeleted]="item?.isDeleted || false"
+    [loading]="loading"
+    editDialogWidth="500px"
+    [(showStatusDialog)]="showStatusDialog"
+    [(selectedStatus)]="selectedStatus"
+    [statusOptions]="statusOptions"
+    [(showEditDialog)]="showEditDialog"
+    [formInvalid]="editForm.invalid"
+    (onBack)="goBack('/sanayi/customer')"
+    (onSaveStatus)="saveStatus($event)"
+    (onSaveEdit)="saveEdit()"
+    [quickInfoTemplate]="quickInfo"
+    [contentTemplate]="contentTpl"
+    [editFormTemplate]="editFormTpl">
+
+    <!-- Quick Info Cards -->
+    <ng-template #quickInfo>
+        <app-info-card label="Vergi No / TC Kimlik No" [value]="item?.taxNo || '-'"></app-info-card>
+        <app-info-card label="Telefon" [value]="item?.phoneNumber || '-'"></app-info-card>
+        <app-info-card label="E-Posta" [value]="item?.email || '-'"></app-info-card>
+        <app-info-card label="Kayıt Tarihi">
+            {{ item?.createdAt | date:'dd.MM.yyyy HH:mm' }}
+        </app-info-card>
+    </ng-template>
+
+    <!-- Main Content -->
+    <ng-template #contentTpl>
+        <!-- İşlem Geçmişi -->
+        <div style="background:var(--surface-card); border:1px solid var(--surface-border); border-radius:12px; padding:1.5rem;">
+            <h3 style="margin:0 0 1rem; font-size:1.1rem; font-weight:600; border-bottom:1px solid var(--surface-border); padding-bottom:0.5rem;">
+                İşlem Geçmişi</h3>
+            <p style="color:var(--text-color-secondary); font-style:italic;">Bu firma için henüz ek işlem kaydı bulunmamaktadır.</p>
+        </div>
+    </ng-template>
+
+    <!-- Edit Form Template -->
+    <ng-template #editFormTpl>
+        <form [formGroup]="editForm" style="display:flex; flex-direction:column; gap:1rem; padding-top:1rem;">
+            <div style="display:flex; flex-direction:column; gap:0.3rem;">
+                <label style="font-size:0.85rem; font-weight:600; color:var(--text-color-secondary);">Firma Adı</label>
+                <input pInputText formControlName="companyName" class="w-full" />
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.3rem;">
+                <label style="font-size:0.85rem; font-weight:600; color:var(--text-color-secondary);">Vergi No / TC Kimlik No</label>
+                <input pInputText formControlName="taxNo" class="w-full" />
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.3rem;">
+                <label style="font-size:0.85rem; font-weight:600; color:var(--text-color-secondary);">Telefon</label>
+                <input pInputText formControlName="phoneNumber" class="w-full" />
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.3rem;">
+                <label style="font-size:0.85rem; font-weight:600; color:var(--text-color-secondary);">E-Posta</label>
+                <input pInputText formControlName="email" class="w-full" />
+            </div>
+        </form>
+    </ng-template>
+
+</app-crud-detail-page>

@@ -1,0 +1,74 @@
+@if (loading) {
+<div style="padding:3rem; text-align:center; color:var(--text-color-secondary);">
+    <i class="pi pi-spin pi-spinner" style="font-size:2rem;"></i>
+</div>
+} @else {
+<div style="padding:1.5rem;">
+
+    <!-- Üst Bar -->
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:1.75rem;">
+        <div style="display:flex; align-items:center; gap:1rem;">
+            <p-button icon="pi pi-arrow-left" [text]="true" [rounded]="true" (onClick)="onBack.emit()" />
+            <div>
+                <h2 style="font-size:1.4rem; font-weight:700; color:var(--text-color); margin:0 0 0.3rem;">
+                    {{ title }}
+                </h2>
+                <p-tag [value]="getStatusLabel(status, isDeleted)"
+                       [severity]="getSeverity(status, isDeleted)"
+                       [rounded]="true"
+                       [style]="{'font-size': '0.80rem', 'font-weight': '600'}" />
+            </div>
+        </div>
+        <div style="display:flex; gap:0.5rem;">
+            <p-button label="Durum Değiştir" icon="pi pi-refresh" severity="secondary" [outlined]="true"
+                (onClick)="showStatusDialogChange.emit(true)" />
+            <p-button label="Düzenle" icon="pi pi-pencil" [outlined]="true"
+                (onClick)="showEditDialogChange.emit(true)" />
+        </div>
+    </div>
+
+    <!-- Quick Info Cards -->
+    @if(quickInfoTemplate) {
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:1rem; margin-bottom:1.75rem;">
+            <ng-container *ngTemplateOutlet="quickInfoTemplate"></ng-container>
+        </div>
+    }
+
+    <!-- Main Content -->
+    @if(contentTemplate) {
+        <ng-container *ngTemplateOutlet="contentTemplate"></ng-container>
+    }
+
+</div>
+}
+
+<!-- Durum Değiştir Dialog -->
+<p-dialog [visible]="showStatusDialog" (visibleChange)="showStatusDialogChange.emit($event)" [modal]="true" [style]="{width:'400px'}"
+    header="Durum Değiştir" [draggable]="false">
+    <ng-template pTemplate="content">
+        <div style="padding:1rem 0;">
+            <p style="color:var(--text-color-secondary); font-size:0.875rem; margin-bottom:1.25rem;">Yeni durumu seçin:</p>
+            <p-select [ngModel]="selectedStatus" (ngModelChange)="selectedStatusChange.emit($event)"
+                [options]="statusOptions" appendTo="body" optionLabel="label" optionValue="value"
+                styleClass="w-full" placeholder="Durum seçin" />
+        </div>
+    </ng-template>
+    <ng-template pTemplate="footer">
+        <p-button label="İptal" severity="secondary" [text]="true" (onClick)="showStatusDialogChange.emit(false)" />
+        <p-button label="Kaydet" icon="pi pi-check" (onClick)="onSaveStatus.emit(selectedStatus)" />
+    </ng-template>
+</p-dialog>
+
+<!-- Düzenleme Dialog -->
+<p-dialog [visible]="showEditDialog" (visibleChange)="showEditDialogChange.emit($event)" [modal]="true" [style]="{width: editDialogWidth}"
+    header="Bilgileri Düzenle" [draggable]="false">
+    
+    <ng-template pTemplate="content">
+        <ng-container *ngTemplateOutlet="editFormTemplate"></ng-container>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <p-button label="İptal" severity="secondary" [text]="true" (onClick)="showEditDialogChange.emit(false)" />
+        <p-button label="Güncelle" icon="pi pi-check" (onClick)="onSaveEdit.emit()" [disabled]="formInvalid" />
+    </ng-template>
+</p-dialog>

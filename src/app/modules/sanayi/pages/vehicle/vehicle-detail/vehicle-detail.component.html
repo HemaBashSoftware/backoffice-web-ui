@@ -1,0 +1,154 @@
+<app-crud-detail-page 
+    [title]="item?.plate || ''"
+    [status]="selectedStatus"
+    [isDeleted]="item?.isDeleted || false"
+    [loading]="loading"
+    [(showStatusDialog)]="showStatusDialog"
+    [(selectedStatus)]="selectedStatus"
+    [statusOptions]="statusOptions"
+    [(showEditDialog)]="showEditDialog"
+    [formInvalid]="editForm.invalid"
+    (onBack)="goBack('/sanayi/vehicle')"
+    (onSaveStatus)="saveStatus($event)"
+    (onSaveEdit)="saveEdit()"
+    [quickInfoTemplate]="quickInfo"
+    [contentTemplate]="contentTpl"
+    [editFormTemplate]="editFormTpl">
+
+    <!-- Quick Info Cards -->
+    <ng-template #quickInfo>
+        <app-info-card label="Marka / Model" [value]="(item?.brand || '') + ' ' + (item?.model || '')"></app-info-card>
+        <app-info-card label="Yıl / Vites" [value]="(item?.year || '-') + ' / ' + (item?.gear || '-')"></app-info-card>
+        <app-info-card label="Yakıt Türü" [value]="item?.fuelType || '-'"></app-info-card>
+        <app-info-card label="Kilometre" [value]="(item?.kilometer | number) + ' KM'"></app-info-card>
+        <app-info-card label="Motor Hacmi" [value]="item?.engineCapacity || '-'"></app-info-card>
+    </ng-template>
+
+    <!-- Main Content (Tabs below quick info) -->
+    <ng-template #contentTpl>
+        <p-tabView>
+            <p-tabPanel header="Araç Özellikleri" leftIcon="pi pi-list">
+                <div class="flex justify-content-end mb-3">
+                    <p-button label="Özellik Ekle" icon="pi pi-plus" size="small" (onClick)="openNewFeature()"></p-button>
+                </div>
+                <p-table [value]="features" [rowHover]="true" styleClass="p-datatable-sm" [emptyMessage]="'Kayıt bulunamadı.'">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>Özellik Adı</th>
+                            <th>Değer</th>
+                            <th style="width: 100px; text-align: center;">İşlem</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-f>
+                        <tr>
+                            <td><strong>{{f.featureKey}}</strong></td>
+                            <td>{{f.featureValue}}</td>
+                            <td style="text-align:center;">
+                                <div style="display:flex; gap:0.25rem; justify-content:center;">
+                                    <p-button icon="pi pi-pencil" severity="warn" [text]="true" [rounded]="true" size="small" (onClick)="openEditFeature(f)" />
+                                    <p-button icon="pi pi-trash" severity="danger" [text]="true" [rounded]="true" size="small" (onClick)="confirmDeleteFeature(f)" />
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </p-tabPanel>
+
+            <p-tabPanel header="Bakım Geçmişi" leftIcon="pi pi-wrench">
+                <p-table [value]="maintenances" [rowHover]="true" styleClass="p-datatable-sm" [emptyMessage]="'Kayıt bulunamadı.'">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>Tarih</th>
+                            <th>Etiket</th>
+                            <th>Durum</th>
+                            <th>Açıklama</th>
+                            <th>Tutar</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-m>
+                        <tr>
+                            <td>{{ m.dateOpened | date:'dd.MM.yyyy' }}</td>
+                            <td>{{ m.label || '-' }}</td>
+                            <td>{{ m.status }}</td>
+                            <td>{{ m.description }}</td>
+                            <td>{{ m.totalFee | currency:'TRY':'symbol':'1.2-2' }}</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </p-tabPanel>
+        </p-tabView>
+    </ng-template>
+
+    <!-- Edit Form Template -->
+    <ng-template #editFormTpl>
+        <form [formGroup]="editForm" style="padding-top:1rem;">
+            <div class="form-grid">
+                <div class="field" style="grid-column: span 2;">
+                    <label>Müşteri <span class="req">*</span></label>
+                    <p-dropdown formControlName="customerId" [options]="customers" optionLabel="companyName" optionValue="id" placeholder="Müşteri Seçiniz" appendTo="body" styleClass="w-full"
+                        [ngClass]="{'ng-invalid ng-dirty': editForm.controls['customerId'].invalid && editForm.controls['customerId'].touched}">
+                    </p-dropdown>
+                </div>
+                
+                <div class="field">
+                    <label>Plaka <span class="req">*</span></label>
+                    <input pInputText formControlName="plate" class="w-full"
+                        [class.ng-invalid]="editForm.controls['plate'].invalid && editForm.controls['plate'].touched" />
+                </div>
+                <div class="field">
+                    <label>Marka <span class="req">*</span></label>
+                    <input pInputText formControlName="brand" class="w-full"
+                        [class.ng-invalid]="editForm.controls['brand'].invalid && editForm.controls['brand'].touched" />
+                </div>
+                <div class="field">
+                    <label>Model <span class="req">*</span></label>
+                    <input pInputText formControlName="model" class="w-full"
+                        [class.ng-invalid]="editForm.controls['model'].invalid && editForm.controls['model'].touched" />
+                </div>
+                <div class="field">
+                    <label>Yıl <span class="req">*</span></label>
+                    <p-inputNumber formControlName="year" [useGrouping]="false" class="w-full"
+                        [ngClass]="{'ng-invalid ng-dirty': editForm.controls['year'].invalid && editForm.controls['year'].touched}"></p-inputNumber>
+                </div>
+                <div class="field">
+                    <label>Vites <span class="req">*</span></label>
+                    <p-dropdown formControlName="gear" [options]="gearOptions" appendTo="body" styleClass="w-full"></p-dropdown>
+                </div>
+                <div class="field">
+                    <label>Yakıt <span class="req">*</span></label>
+                    <p-dropdown formControlName="fuelType" [options]="fuelOptions" appendTo="body" styleClass="w-full"></p-dropdown>
+                </div>
+                <div class="field">
+                    <label>Motor Hacmi</label>
+                    <input pInputText formControlName="engineCapacity" class="w-full" />
+                </div>
+                <div class="field">
+                    <label>Kilometre</label>
+                    <p-inputNumber formControlName="kilometer" class="w-full"></p-inputNumber>
+                </div>
+            </div>
+        </form>
+    </ng-template>
+
+</app-crud-detail-page>
+
+<p-dialog [(visible)]="showFeatureDialog" [modal]="true" [style]="{width:'450px'}" [header]="isEditFeature ? 'Özellik Düzenle' : 'Yeni Özellik'">
+    <form [formGroup]="featureForm" style="padding-top:1rem;">
+        <div class="flex flex-column gap-3">
+            <div class="field">
+                <label>Özellik Adı <span style="color:red">*</span></label>
+                <input pInputText formControlName="featureKey" placeholder="Örn: Renk, Şasi No vb." class="w-full"
+                    [class.ng-invalid]="featureForm.controls['featureKey'].invalid && featureForm.controls['featureKey'].touched" />
+            </div>
+            <div class="field">
+                <label>Değer <span style="color:red">*</span></label>
+                <input pInputText formControlName="featureValue" placeholder="Örn: Beyaz" class="w-full"
+                    [class.ng-invalid]="featureForm.controls['featureValue'].invalid && featureForm.controls['featureValue'].touched" />
+            </div>
+        </div>
+    </form>
+    <ng-template pTemplate="footer">
+        <p-button label="İptal" icon="pi pi-times" severity="secondary" [text]="true" (onClick)="showFeatureDialog = false" />
+        <p-button [label]="isEditFeature ? 'Güncelle' : 'Kaydet'" icon="pi pi-check" (onClick)="saveFeature()" />
+    </ng-template>
+</p-dialog>

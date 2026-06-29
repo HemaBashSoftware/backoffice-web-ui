@@ -1,263 +1,241 @@
-<p-toast />
-<p-confirmdialog />
+<app-crud-detail-page 
+    [title]="item?.name || ''"
+    [status]="item?.recordStatus || 1"
+    [isDeleted]="item?.recordStatus === 2"
+    [loading]="loading"
+    editDialogWidth="600px"
+    [(showStatusDialog)]="showStatusDialog"
+    [(selectedStatus)]="selectedStatus"
+    [statusOptions]="statusOptions"
+    [(showEditDialog)]="showEditDialog"
+    [formInvalid]="editForm.invalid"
+    (onBack)="goBack('/ysc/customer')"
+    (onSaveStatus)="saveStatus($event)"
+    (onSaveEdit)="saveEdit()"
+    [quickInfoTemplate]="quickInfo"
+    [contentTemplate]="contentTpl"
+    [editFormTemplate]="editFormTpl">
 
-@if (loading) {
-    <div style="padding:3rem; text-align:center; color:var(--text-color-secondary);">
-        <i class="pi pi-spin pi-spinner" style="font-size:2rem;"></i>
-    </div>
-}
+    <!-- Quick Info Cards -->
+    <ng-template #quickInfo>
+        <app-info-card label="Vergi No" [value]="item?.taxNumber || '-'"></app-info-card>
+        <app-info-card label="Vergi Dairesi" [value]="item?.taxOffice || '-'"></app-info-card>
+        <app-info-card label="Firma Yetkilisi" [value]="item?.firmOfficial || '-'"></app-info-card>
+        <app-info-card label="TSE No" [value]="item?.tseNo || '-'"></app-info-card>
+        <app-info-card label="HYB No" [value]="item?.hybNo || '-'"></app-info-card>
+        <app-info-card label="CE Sertifika" [value]="item?.ceCertificateNo || '-'"></app-info-card>
+    </ng-template>
 
-@if (!loading && customer) {
-<div style="padding:1.5rem;">
-
-    <!-- Üst Bar -->
-    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:1.75rem;">
-        <div style="display:flex; align-items:center; gap:1rem;">
-            <p-button icon="pi pi-arrow-left" [text]="true" [rounded]="true" (onClick)="goBack()" />
-            <div>
-                <h2 style="font-size:1.4rem; font-weight:700; color:var(--text-color); margin:0 0 0.3rem;">
-                    {{ customer.name }}
-                </h2>
-                <p-tag [value]="getStatusLabel(customer.recordStatus)"
-                       [severity]="getSeverity(customer.recordStatus)" />
-            </div>
-        </div>
-        <div style="display:flex; gap:0.5rem;">
-            <p-button label="Durum Değiştir" icon="pi pi-refresh" severity="secondary" [outlined]="true"
-                      (onClick)="openStatusDialog()" />
-            <p-button label="Düzenle" icon="pi pi-pencil" [outlined]="true"
-                      (onClick)="router.navigate(['/ysc/customer'])" />
-        </div>
-    </div>
-
-    <!-- Bilgi Kartları -->
-    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:0.75rem; margin-bottom:1.75rem;">
-        <div style="background:var(--surface-card); border:1px solid var(--surface-border); border-radius:10px; padding:1rem;">
-            <div style="font-size:0.75rem; color:var(--text-color-secondary); margin-bottom:0.3rem;">Vergi No</div>
-            <div style="font-weight:600; color:var(--text-color);">{{ customer.taxNumber }}</div>
-        </div>
-        <div style="background:var(--surface-card); border:1px solid var(--surface-border); border-radius:10px; padding:1rem;">
-            <div style="font-size:0.75rem; color:var(--text-color-secondary); margin-bottom:0.3rem;">Vergi Dairesi</div>
-            <div style="font-weight:600; color:var(--text-color);">{{ customer.taxOffice || '-' }}</div>
-        </div>
-        <div style="background:var(--surface-card); border:1px solid var(--surface-border); border-radius:10px; padding:1rem;">
-            <div style="font-size:0.75rem; color:var(--text-color-secondary); margin-bottom:0.3rem;">Firma Yetkilisi</div>
-            <div style="font-weight:600; color:var(--text-color);">{{ customer.firmOfficial || '-' }}</div>
-        </div>
-        <div style="background:var(--surface-card); border:1px solid var(--surface-border); border-radius:10px; padding:1rem;">
-            <div style="font-size:0.75rem; color:var(--text-color-secondary); margin-bottom:0.3rem;">TSE No</div>
-            <div style="font-weight:600; color:var(--text-color);">{{ customer.tseNo || '-' }}</div>
-        </div>
-        <div style="background:var(--surface-card); border:1px solid var(--surface-border); border-radius:10px; padding:1rem;">
-            <div style="font-size:0.75rem; color:var(--text-color-secondary); margin-bottom:0.3rem;">HYB No</div>
-            <div style="font-weight:600; color:var(--text-color);">{{ customer.hybNo || '-' }}</div>
-        </div>
-        <div style="background:var(--surface-card); border:1px solid var(--surface-border); border-radius:10px; padding:1rem;">
-            <div style="font-size:0.75rem; color:var(--text-color-secondary); margin-bottom:0.3rem;">CE Sertifika</div>
-            <div style="font-weight:600; color:var(--text-color);">{{ customer.ceCertificateNo || '-' }}</div>
-        </div>
-    </div>
-
-    <!-- Sekmeler -->
-    <p-tabs value="0">
-
-        <!-- Adresler -->
-        <p-tabpanel value="0">
-            <ng-template #header><i class="pi pi-map-marker" style="margin-right:0.4rem;"></i>Adresler ({{ addresses.length }})</ng-template>
-            <div style="padding-top:1rem;">
-                <div style="display:flex; justify-content:flex-end; margin-bottom:0.75rem;">
-                    <p-button label="Yeni Adres" icon="pi pi-plus" size="small" (onClick)="openNewAddr()" />
-                </div>
-                <div class="card" style="padding:0;">
-                <p-table [value]="addresses" [columns]="addrCols">
-                    <ng-template #header let-columns>
-                        <tr>
-                            <th *ngFor="let col of columns" pSortableColumn="{{ col.field }}">
-                                {{ col.header }} <p-sortIcon field="{{ col.field }}" />
-                            </th>
-                            <th>Bina / Kapı</th>
-                            <th style="width:90px; text-align:center;">İşlem</th>
-                        </tr>
-                    </ng-template>
-                    <ng-template #body let-row let-columns="columns">
-                        <tr>
-                            <td *ngFor="let col of columns">{{ row[col.field] || '-' }}</td>
-                            <td>{{ row.buildingNo }} / {{ row.doorNo }}</td>
-                            <td style="text-align:center;">
-                                <div style="display:flex; gap:0.25rem; justify-content:center;">
-                                    <p-button icon="pi pi-pencil" severity="warn" [text]="true" [rounded]="true" size="small"
-                                              (onClick)="openEditAddr(row)" />
-                                    <p-button icon="pi pi-trash" severity="danger" [text]="true" [rounded]="true" size="small"
-                                              (onClick)="confirmDeleteAddr(row)" />
+    <!-- Main Content (Tabs) -->
+    <ng-template #contentTpl>
+        <p-tabs value="0">
+            <!-- Adresler -->
+            <p-tabpanel value="0">
+                <ng-template #header><i class="pi pi-map-marker" style="margin-right:0.4rem;"></i>Adresler ({{ addresses.length }})</ng-template>
+                <div style="padding-top:1rem;">
+                    <div style="display:flex; justify-content:flex-end; margin-bottom:0.75rem;">
+                        <p-button label="Yeni Adres" icon="pi pi-plus" size="small" (onClick)="openNewAddr()" />
+                    </div>
+                    @if (addresses.length === 0) {
+                        <div style="text-align:center; padding:1.5rem; color:var(--text-color-secondary); border:1px solid var(--surface-border); border-radius:12px; background:var(--surface-card);">
+                            Adres kaydı yok.
+                        </div>
+                    } @else {
+                        <div style="display:grid; grid-template-columns:1fr; gap:1.75rem;">
+                            @for (row of addresses; track row.id) {
+                                <div style="background:var(--surface-card); border:1px solid var(--surface-border); border-radius:12px; padding:1.5rem;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--surface-border); padding-bottom:0.75rem; margin-bottom:1rem;">
+                                        <h3 style="margin:0; font-size:1.1rem; font-weight:600; display:flex; align-items:center; gap:0.5rem; color:var(--text-color);">
+                                            <i class="pi pi-map-marker"></i> {{ row.label || 'Adres Bilgisi' }}
+                                        </h3>
+                                        <div style="display:flex; gap:0.25rem;">
+                                            <p-button icon="pi pi-pencil" severity="warn" [text]="true" [rounded]="true" size="small" (onClick)="openEditAddr(row)" />
+                                            <p-button icon="pi pi-trash" severity="danger" [text]="true" [rounded]="true" size="small" (onClick)="confirmDeleteAddr(row)" />
+                                        </div>
+                                    </div>
+                                    <p style="font-size:1.05rem; color:var(--text-color); margin:0; line-height:1.5;">
+                                        <span style="margin-left:0.5rem; color:var(--text-color-secondary);"><strong>Adres:</strong> {{ row.fullAddress || '-' }}</span>
+                                        @if(row.street) { <span style="margin-left:0.5rem; color:var(--text-color-secondary);"><strong>Sokak/Cadde:</strong> {{ row.street }}</span> }
+                                        @if(row.buildingNo || row.doorNo) { <span style="margin-left:0.5rem; color:var(--text-color-secondary);"><strong>Bina/Kapı:</strong> {{ row.buildingNo || '-' }} / {{ row.doorNo || '-' }}</span> }
+                                    </p>
                                 </div>
-                            </td>
-                        </tr>
-                    </ng-template>
-                    <ng-template #emptymessage>
-                        <tr><td [attr.colspan]="addrCols.length + 2" style="text-align:center; padding:1.5rem; color:var(--text-color-secondary);">Adres kaydı yok.</td></tr>
-                    </ng-template>
-                </p-table>
+                            }
+                        </div>
+                    }
                 </div>
-            </div>
-        </p-tabpanel>
+            </p-tabpanel>
 
-        <!-- İletişim Kişileri -->
-        <p-tabpanel value="1">
-            <ng-template #header><i class="pi pi-users" style="margin-right:0.4rem;"></i>İletişim Kişileri ({{ contacts.length }})</ng-template>
-            <div style="padding-top:1rem;">
-                <div style="display:flex; justify-content:flex-end; margin-bottom:0.75rem;">
-                    <p-button label="Yeni Kişi" icon="pi pi-plus" size="small" (onClick)="openNewContact()" />
+            <!-- İletişim Kişileri -->
+            <p-tabpanel value="1">
+                <ng-template #header><i class="pi pi-users" style="margin-right:0.4rem;"></i>İletişim Kişileri ({{ contacts.length }})</ng-template>
+                <div style="padding-top:1rem;">
+                    <div style="display:flex; justify-content:flex-end; margin-bottom:0.75rem;">
+                        <p-button label="Yeni Kişi" icon="pi pi-plus" size="small" (onClick)="openNewContact()" />
+                    </div>
+                    <div class="card" style="padding:0;">
+                        <p-table [value]="contacts" [columns]="contactCols">
+                            <ng-template #header let-columns>
+                                <tr>
+                                    <th>Ad Soyad</th>
+                                    <th *ngFor="let col of columns" pSortableColumn="{{ col.field }}">
+                                        {{ col.header }} <p-sortIcon field="{{ col.field }}" />
+                                    </th>
+                                    <th style="width:90px; text-align:center;">İşlem</th>
+                                </tr>
+                            </ng-template>
+                            <ng-template #body let-row let-columns="columns">
+                                <tr>
+                                    <td>{{ row.name }} {{ row.surname }}</td>
+                                    <td *ngFor="let col of columns">{{ row[col.field] || '-' }}</td>
+                                    <td style="text-align:center;">
+                                        <div style="display:flex; gap:0.25rem; justify-content:center;">
+                                            <p-button icon="pi pi-pencil" severity="warn" [text]="true" [rounded]="true" size="small" (onClick)="openEditContact(row)" />
+                                            <p-button icon="pi pi-trash" severity="danger" [text]="true" [rounded]="true" size="small" (onClick)="confirmDeleteContact(row)" />
+                                        </div>
+                                    </td>
+                                </tr>
+                            </ng-template>
+                            <ng-template #emptymessage>
+                                <tr>
+                                    <td [attr.colspan]="contactCols.length + 2" style="text-align:center; padding:1.5rem; color:var(--text-color-secondary);">İletişim kişisi yok.</td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+                    </div>
                 </div>
-                <div class="card" style="padding:0;">
-                <p-table [value]="contacts" [columns]="contactCols">
-                    <ng-template #header let-columns>
-                        <tr>
-                            <th>Ad Soyad</th>
-                            <th *ngFor="let col of columns" pSortableColumn="{{ col.field }}">
-                                {{ col.header }} <p-sortIcon field="{{ col.field }}" />
-                            </th>
-                            <th style="width:90px; text-align:center;">İşlem</th>
-                        </tr>
-                    </ng-template>
-                    <ng-template #body let-row let-columns="columns">
-                        <tr>
-                            <td>{{ row.name }} {{ row.surname }}</td>
-                            <td *ngFor="let col of columns">{{ row[col.field] || '-' }}</td>
-                            <td style="text-align:center;">
-                                <div style="display:flex; gap:0.25rem; justify-content:center;">
-                                    <p-button icon="pi pi-pencil" severity="warn" [text]="true" [rounded]="true" size="small"
-                                              (onClick)="openEditContact(row)" />
-                                    <p-button icon="pi pi-trash" severity="danger" [text]="true" [rounded]="true" size="small"
-                                              (onClick)="confirmDeleteContact(row)" />
-                                </div>
-                            </td>
-                        </tr>
-                    </ng-template>
-                    <ng-template #emptymessage>
-                        <tr><td [attr.colspan]="contactCols.length + 2" style="text-align:center; padding:1.5rem; color:var(--text-color-secondary);">İletişim kişisi yok.</td></tr>
-                    </ng-template>
-                </p-table>
-                </div>
-            </div>
-        </p-tabpanel>
+            </p-tabpanel>
+        </p-tabs>
 
-    </p-tabs>
-</div>
-}
+        <!-- Adres Dialog -->
+        <p-dialog [(visible)]="showAddrDialog" [modal]="true" [style]="{width:'620px'}"
+            [header]="isEditAddr ? 'Adres Düzenle' : 'Yeni Adres'" [draggable]="false">
+            <ng-template pTemplate="content">
+                <form [formGroup]="addrForm">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; padding:0.5rem 0;">
+                        <div class="dfield" style="grid-column:span 2;">
+                            <label>Adres Etiketi</label>
+                            <input pInputText formControlName="label" class="w-full" placeholder="ör. Merkez" />
+                        </div>
+                        <div class="dfield">
+                            <label>İl</label>
+                            <p-select formControlName="provinceId" [options]="provinces" optionLabel="name" optionValue="id"
+                                placeholder="İl seçin" styleClass="w-full" [filter]="true"
+                                (onChange)="onAddrProvinceChange($event.value, undefined)" />
+                        </div>
+                        <div class="dfield">
+                            <label>İlçe</label>
+                            <p-select formControlName="districtId" [options]="districts" optionLabel="name" optionValue="id"
+                                placeholder="İlçe seçin" styleClass="w-full" [filter]="true"
+                                (onChange)="onAddrDistrictChange($event.value)" />
+                        </div>
+                        <div class="dfield">
+                            <label>Mahalle</label>
+                            <p-select formControlName="neighbourhoodId" [options]="neighbourhoods" optionLabel="name"
+                                optionValue="id" placeholder="Mahalle seçin" styleClass="w-full" [filter]="true" />
+                        </div>
+                        <div class="dfield">
+                            <label>Posta Kodu</label>
+                            <p-inputnumber formControlName="postalCode" [useGrouping]="false" styleClass="w-full" />
+                        </div>
+                        <div class="dfield" style="grid-column:span 2;">
+                            <label>Sokak / Cadde</label>
+                            <input pInputText formControlName="street" class="w-full" />
+                        </div>
+                        <div class="dfield">
+                            <label>Bina No</label>
+                            <input pInputText formControlName="buildingNo" class="w-full" />
+                        </div>
+                        <div class="dfield">
+                            <label>Kapı No</label>
+                            <input pInputText formControlName="doorNo" class="w-full" />
+                        </div>
+                        <div class="dfield" style="grid-column:span 2;">
+                            <label>Tam Adres</label>
+                            <textarea pTextarea formControlName="fullAddress" rows="2" class="w-full"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </ng-template>
+            <ng-template pTemplate="footer">
+                <p-button label="İptal" severity="secondary" [text]="true" (onClick)="showAddrDialog = false" />
+                <p-button [label]="isEditAddr ? 'Güncelle' : 'Kaydet'" icon="pi pi-check" (onClick)="saveAddr()" />
+            </ng-template>
+        </p-dialog>
 
-<!-- Durum Dialog -->
-<p-dialog [(visible)]="showStatusDialog" [modal]="true" [style]="{width:'500px', height:'500px'}"
-          header="Müşteri Durumu" [draggable]="false">
-    <ng-template pTemplate="content">
-        <div style="padding:1rem 0;">
-            <p style="color:var(--text-color-secondary); font-size:0.875rem; margin-bottom:1.25rem;">Yeni durumu seçin:</p>
-            <p-select [(ngModel)]="selectedStatus" [options]="statusOptions" appendTo="body"
-                      optionLabel="label" optionValue="value"
-                      styleClass="w-full" placeholder="Durum seçin" />
-        </div>
+        <!-- İletişim Kişisi Dialog -->
+        <p-dialog [(visible)]="showContactDialog" [modal]="true" [style]="{width:'560px'}"
+            [header]="isEditContact ? 'Kişi Düzenle' : 'Yeni Kişi'" [draggable]="false">
+            <ng-template pTemplate="content">
+                <form [formGroup]="contactForm">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; padding:0.5rem 0;">
+                        <div class="dfield">
+                            <label>Ad</label>
+                            <input pInputText formControlName="name" class="w-full" />
+                        </div>
+                        <div class="dfield">
+                            <label>Soyad</label>
+                            <input pInputText formControlName="surname" class="w-full" />
+                        </div>
+                        <div class="dfield">
+                            <label>Görevi / Rolü</label>
+                            <input pInputText formControlName="role" class="w-full" />
+                        </div>
+                        <div class="dfield">
+                            <label>Telefon</label>
+                            <input pInputText formControlName="phone" class="w-full" />
+                        </div>
+                        <div class="dfield" style="grid-column:span 2;">
+                            <label>E-posta</label>
+                            <input pInputText formControlName="email" class="w-full" type="email" />
+                        </div>
+                        <div class="dfield" style="grid-column:span 2;">
+                            <label>Notlar</label>
+                            <textarea pTextarea formControlName="notes" rows="2" class="w-full"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </ng-template>
+            <ng-template pTemplate="footer">
+                <p-button label="İptal" severity="secondary" [text]="true" (onClick)="showContactDialog = false" />
+                <p-button [label]="isEditContact ? 'Güncelle' : 'Kaydet'" icon="pi pi-check" (onClick)="saveContact()" />
+            </ng-template>
+        </p-dialog>
     </ng-template>
-    <ng-template pTemplate="footer">
-        <p-button label="İptal" severity="secondary" [text]="true" (onClick)="showStatusDialog = false" />
-        <p-button label="Kaydet" icon="pi pi-check" (onClick)="saveStatus()" />
-    </ng-template>
-</p-dialog>
 
-<!-- Adres Dialog -->
-<p-dialog [(visible)]="showAddrDialog" [modal]="true" [style]="{width:'620px'}"
-          [header]="isEditAddr ? 'Adres Düzenle' : 'Yeni Adres'" [draggable]="false">
-    <ng-template pTemplate="content">
-        <form [formGroup]="addrForm">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; padding:0.5rem 0;">
+    <!-- Edit Form Template (Main Customer) -->
+    <ng-template #editFormTpl>
+        <form [formGroup]="editForm" style="padding-top:1rem;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
                 <div class="dfield" style="grid-column:span 2;">
-                    <label>Adres Etiketi</label>
-                    <input pInputText formControlName="label" class="w-full" placeholder="ör. Merkez" />
-                </div>
-                <div class="dfield">
-                    <label>İl</label>
-                    <p-select formControlName="provinceId" [options]="provinces" optionLabel="name" optionValue="id"
-                              placeholder="İl seçin" styleClass="w-full" [filter]="true"
-                              (onChange)="onAddrProvinceChange($event.value, undefined)" />
-                </div>
-                <div class="dfield">
-                    <label>İlçe</label>
-                    <p-select formControlName="districtId" [options]="districts" optionLabel="name" optionValue="id"
-                              placeholder="İlçe seçin" styleClass="w-full" [filter]="true"
-                              (onChange)="onAddrDistrictChange($event.value)" />
-                </div>
-                <div class="dfield">
-                    <label>Mahalle</label>
-                    <p-select formControlName="neighbourhoodId" [options]="neighbourhoods" optionLabel="name" optionValue="id"
-                              placeholder="Mahalle seçin" styleClass="w-full" [filter]="true" />
-                </div>
-                <div class="dfield">
-                    <label>Posta Kodu</label>
-                    <p-inputnumber formControlName="postalCode" [useGrouping]="false" styleClass="w-full" />
-                </div>
-                <div class="dfield" style="grid-column:span 2;">
-                    <label>Sokak / Cadde</label>
-                    <input pInputText formControlName="street" class="w-full" />
-                </div>
-                <div class="dfield">
-                    <label>Bina No</label>
-                    <input pInputText formControlName="buildingNo" class="w-full" />
-                </div>
-                <div class="dfield">
-                    <label>Kapı No</label>
-                    <input pInputText formControlName="doorNo" class="w-full" />
-                </div>
-                <div class="dfield" style="grid-column:span 2;">
-                    <label>Tam Adres</label>
-                    <textarea pTextarea formControlName="fullAddress" rows="2" class="w-full"></textarea>
-                </div>
-            </div>
-        </form>
-    </ng-template>
-    <ng-template pTemplate="footer">
-        <p-button label="İptal" severity="secondary" [text]="true" (onClick)="showAddrDialog = false" />
-        <p-button [label]="isEditAddr ? 'Güncelle' : 'Kaydet'" icon="pi pi-check" (onClick)="saveAddr()" />
-    </ng-template>
-</p-dialog>
-
-<!-- İletişim Kişisi Dialog -->
-<p-dialog [(visible)]="showContactDialog" [modal]="true" [style]="{width:'560px'}"
-          [header]="isEditContact ? 'Kişi Düzenle' : 'Yeni Kişi'" [draggable]="false">
-    <ng-template pTemplate="content">
-        <form [formGroup]="contactForm">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; padding:0.5rem 0;">
-                <div class="dfield">
-                    <label>Ad</label>
+                    <label>Firma Adı</label>
                     <input pInputText formControlName="name" class="w-full" />
                 </div>
                 <div class="dfield">
-                    <label>Soyad</label>
-                    <input pInputText formControlName="surname" class="w-full" />
+                    <label>Vergi No</label>
+                    <p-inputnumber formControlName="taxNumber" [useGrouping]="false" styleClass="w-full" />
                 </div>
                 <div class="dfield">
-                    <label>Görevi / Rolü</label>
-                    <input pInputText formControlName="role" class="w-full" />
+                    <label>Vergi Dairesi</label>
+                    <input pInputText formControlName="taxOffice" class="w-full" />
                 </div>
                 <div class="dfield">
-                    <label>Telefon</label>
-                    <input pInputText formControlName="phone" class="w-full" />
+                    <label>Firma Yetkilisi</label>
+                    <input pInputText formControlName="firmOfficial" class="w-full" />
                 </div>
-                <div class="dfield" style="grid-column:span 2;">
-                    <label>E-posta</label>
-                    <input pInputText formControlName="email" class="w-full" type="email" />
+                <div class="dfield">
+                    <label>TSE No</label>
+                    <input pInputText formControlName="tseNo" class="w-full" />
                 </div>
-                <div class="dfield" style="grid-column:span 2;">
-                    <label>Notlar</label>
-                    <textarea pTextarea formControlName="notes" rows="2" class="w-full"></textarea>
+                <div class="dfield">
+                    <label>HYB No</label>
+                    <input pInputText formControlName="hybNo" class="w-full" />
+                </div>
+                <div class="dfield">
+                    <label>CE Sertifika No</label>
+                    <input pInputText formControlName="ceCertificateNo" class="w-full" />
                 </div>
             </div>
         </form>
     </ng-template>
-    <ng-template pTemplate="footer">
-        <p-button label="İptal" severity="secondary" [text]="true" (onClick)="showContactDialog = false" />
-        <p-button [label]="isEditContact ? 'Güncelle' : 'Kaydet'" icon="pi pi-check" (onClick)="saveContact()" />
-    </ng-template>
-</p-dialog>
 
-<style>
-    .dfield { display:flex; flex-direction:column; gap:0.3rem; }
-    .dfield label { font-size:0.8rem; font-weight:600; color:var(--text-color-secondary); }
-</style>
+</app-crud-detail-page>
